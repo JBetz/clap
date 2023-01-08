@@ -1,0 +1,52 @@
+cabal-version:      2.4
+name:               clap
+version:            0.1.0.0
+extra-source-files: CHANGELOG.md
+
+library
+    exposed-modules:  Clap,
+                      Clap.Extension,
+                      Clap.Interface.AudioBuffer,
+                      Clap.Interface.Entry,
+                      Clap.Interface.Events,
+                      Clap.Interface.Fixedpoint,
+                      Clap.Interface.Host,
+                      Clap.Interface.Id,
+                      Clap.Interface.Version,
+                      Clap.Interface.Plugin,
+                      Clap.Interface.PluginFactory,
+                      Clap.Interface.PluginFeatures,
+                      Clap.Interface.Process,
+                      Clap.Interface.Foreign,
+                      Clap.Interface.Foreign.AudioBuffer,
+                      Clap.Interface.Foreign.Entry,
+                      Clap.Interface.Foreign.Events,
+                      Clap.Interface.Foreign.Fixedpoint,
+                      Clap.Interface.Foreign.Host,
+                      Clap.Interface.Foreign.Id,
+                      Clap.Interface.Foreign.Version,
+                      Clap.Interface.Foreign.Plugin,
+                      Clap.Interface.Foreign.PluginFactory,
+                      Clap.Interface.Foreign.Process,
+                      Clap.Interface.Extension.Gui,
+                      Clap.Interface.Extension.Log,
+                      Clap.Interface.Extension.Foreign.Gui,
+                      Clap.Interface.Extension.Foreign.Log
+    build-depends:    base,
+                      bindings-DSL,
+                      containers,
+                      directory,
+                      extra,
+                      unix
+    build-tool-depends: hsc2hs:hsc2hs
+    hs-source-dirs:   src
+    default-language: Haskell2010
+    include-dirs:     include
+
+executable clap-exe
+    main-is:          Main.hs
+    build-depends:    base,
+                      clap
+    hs-source-dirs:   app
+    default-language: Haskell2010
+    include-dirs:     include
