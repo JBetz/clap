@@ -36,12 +36,12 @@ newtype GuiResizeHintsHandle = GuiResizeHintsHandle { unGuiResizeHintsHandle :: 
 newtype WindowHandle = WindowHandle { unWindowHandle :: Ptr C'clap_window }
     deriving (Show)
 
-createWindow :: WindowAPI -> IO WindowHandle
-createWindow api = do
+createWindow :: WindowAPI -> Ptr () -> IO WindowHandle
+createWindow api handle = do
     cApi <- newCString $ Prelude.show api
     cWindow <- new $ C'clap_window
         { c'clap_window'api = cApi
-        -- , c'clap_window'window = undefined
+        , c'clap_window'handle = handle
         }
     pure $ WindowHandle cWindow
 

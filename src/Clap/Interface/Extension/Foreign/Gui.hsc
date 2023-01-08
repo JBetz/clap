@@ -24,10 +24,7 @@ import Clap.Interface.Foreign.Plugin (C'clap_plugin)
         } clap_window_t; -}
 #starttype struct clap_window
 #field api , CString
-#field cocoa , clap_nsview
-#field x11 , clap_xwnd
-#field win32 , clap_hwnd
-#field ptr , Ptr ()
+#field handle , Ptr ()
 #stoptype
 #synonym_t clap_window_t , <struct clap_window>
 {- typedef struct clap_gui_resize_hints {
