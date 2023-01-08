@@ -20,12 +20,12 @@ Clap version: 1.1.6
 - [x] entry
 - [ ] events
 - [ ] fixedpoint
-- [ ] host
+- [x] host
 - [x] id
 - [x] plugin-factory
-- [ ] plugin-features
+- [x] plugin-features
 - [ ] plugin-invalidation
-- [ ] plugin
+- [x] plugin
 - [ ] process
 - [ ] stream
 - [x] string-sizes
