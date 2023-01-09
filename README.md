@@ -43,7 +43,7 @@ Clap version: 1.1.6
 - [ ] note-ports
 - [ ] params
 - [ ] posix-fd-support
-- [ ] render
+- [x] render
 - [ ] state
 - [ ] tail
 - [ ] thread-check
