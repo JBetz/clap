@@ -8,10 +8,10 @@ import Foreign.Ptr
 import Clap.Interface.Foreign.Host
 import Clap.Interface.Foreign.Plugin (C'clap_plugin)
 -- #globalarray CLAP_EXT_GUI , CChar
--- #globalarray CLAP_WINDOW_API_WIN32 , CChar
--- #globalarray CLAP_WINDOW_API_COCOA , CChar
--- #globalarray CLAP_WINDOW_API_X11 , CChar
--- #globalarray CLAP_WINDOW_API_WAYLAND , CChar
+#globalarray CLAP_WINDOW_API_WIN32 , CChar
+#globalarray CLAP_WINDOW_API_COCOA , CChar
+#globalarray CLAP_WINDOW_API_X11 , CChar
+#globalarray CLAP_WINDOW_API_WAYLAND , CChar
 -- #globalvar clap_hwnd , Ptr ()
 -- #globalvar clap_nsview , Ptr ()
 {- typedef unsigned long clap_xwnd; -}

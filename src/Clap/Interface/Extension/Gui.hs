@@ -51,15 +51,16 @@ isApiSupported (PluginGuiHandle pluginGui) (PluginHandle plugin) windowApi isFlo
     withCString (Prelude.show windowApi) $ \cWindowApi ->
         pure $ toBool $ mK'is_api_supported funPtr plugin cWindowApi (fromBool isFloating)
 
--- TODO: The const char **api variable should be explicitly assigned as a pointer to 
--- one of the CLAP_WINDOW_API_ constants defined above, not strcopied.
 getPreferredApi :: PluginGuiHandle -> PluginHandle -> WindowAPI -> Bool -> IO Bool
 getPreferredApi (PluginGuiHandle pluginGui) (PluginHandle plugin) windowApi isFloating = do
     funPtr <- peek $ p'clap_plugin_gui'get_preferred_api pluginGui
-    withCString (Prelude.show windowApi) $ \cWindowApi -> do 
-        ptrCWindowApi <- new cWindowApi
-        ptrIsFloating <- new $ fromBool isFloating
-        pure $ toBool $ mK'get_preferred_api funPtr plugin ptrCWindowApi ptrIsFloating
+    cWindowApi <- new $ case windowApi of 
+        Win32 -> c'CLAP_WINDOW_API_WIN32
+        Cocoa -> c'CLAP_WINDOW_API_COCOA
+        X11 -> c'CLAP_WINDOW_API_X11
+        Wayland -> c'CLAP_WINDOW_API_WAYLAND
+    ptrIsFloating <- new $ fromBool isFloating
+    pure $ toBool $ mK'get_preferred_api funPtr plugin cWindowApi ptrIsFloating
 
 create :: PluginGuiHandle -> PluginHandle -> WindowAPI -> Bool -> IO Bool
 create (PluginGuiHandle pluginGui) (PluginHandle plugin) windowApi isFloating = do
