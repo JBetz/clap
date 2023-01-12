@@ -5,6 +5,7 @@ import Data.Bits
 import Data.Int
 
 newtype ClapId = ClapId { unClapId :: Int }
+    deriving (Show)
 
 clapBeattimeFactor, clapSectimeFactor :: Int64
 clapBeattimeFactor = 1 `shiftL` 31

@@ -45,6 +45,7 @@ data Event
     | Midi MidiEvent
     | MidiSysex MidiSysexEvent
     | Midi2 Midi2Event
+    deriving (Show)
 
 eventToEnumValue :: Event -> Int
 eventToEnumValue = \case
@@ -68,14 +69,14 @@ data NoteEvent = NoteEvent
     , noteEvent_channel :: Int16
     , noteEvent_key :: Int16
     , noteEvent_velocity :: Double
-    }
+    } deriving (Show)
 
 data NoteKillEvent = NoteKillEvent
     { noteKillEvent_noteId :: Int32
     , noteKillEvent_portIndex :: Int16
     , noteKillEvent_channel :: Int16
     , noteKillEvent_key :: Word16
-    }
+    } deriving (Show)
 
 data NoteExpression
     = Volume Double 
@@ -85,6 +86,7 @@ data NoteExpression
     | Expression Double
     | Brightness Double
     | Pressure Double
+    deriving (Show)
 
 noteExpressionToEnumValue :: NoteExpression -> Int
 noteExpressionToEnumValue = \case
@@ -112,7 +114,7 @@ data NoteExpressionEvent = NoteExpressionEvent
     , noteExpressionEvent_channel :: Int16
     , noteExpressionEvent_key :: Int16
     , noteExpressionEvent_value :: NoteExpression
-    }
+    } deriving (Show)
 
 data ParamValueEvent = ParamValueEvent
     { paramValueEvent_paramId :: ClapId
@@ -122,7 +124,7 @@ data ParamValueEvent = ParamValueEvent
     , paramValueEvent_channel :: Int16
     , paramValueEvent_key :: Int16
     , paramValueEvent_value :: Double 
-    }
+    } deriving (Show)
 
 data ParamModEvent = ParamModEvent
     { paramModEvent_paramId :: ClapId
@@ -132,10 +134,11 @@ data ParamModEvent = ParamModEvent
     , paramModEvent_channel :: Int16
     , paramModEvent_key :: Int16
     , paramModEvent_amount :: Double 
-    }
+    } deriving (Show)
 
 newtype ParamGestureEvent = ParamGestureEvent
     { paramGestureEvent_paramId :: ClapId }
+    deriving (Show)
 
 data TransportFlag
     = HasTempo
@@ -162,22 +165,22 @@ data TransportEvent = TransportEvent
     , transportEvent_barNumber :: Int32
     , transportEvent_timeSignatureNumerator :: Word16 
     , transportEvent_timeSignatureDenominator :: Word16
-    }
+    } deriving (Show)
 
 data MidiEvent = MidiEvent
     { midiEvent_portIndex :: Word16
     , midiEvent_data :: (Word8, Word8, Word8)
-    }
+    } deriving (Show)
 
 data MidiSysexEvent = MidiSysexEvent
     { midiSysexEvent_portIndex :: Word16
     , midiSysexEvent_buffer :: [Word8] 
-    }
+    } deriving (Show)
 
 data Midi2Event = Midi2Event
     { midi2Event_portIndex :: Word16
     , midi2Event_data :: (Word32, Word32, Word32, Word32)
-    }
+    } deriving (Show)
 
 newtype InputEventsHandle = InputEventsHandle { unInputEventsHandle :: Ptr C'clap_input_events }
     deriving (Show)
