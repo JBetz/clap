@@ -26,13 +26,13 @@ import Clap.Interface.Foreign.Version
 #field vendor , CString
 #field url , CString
 #field version , CString
-#field get_extension , FunPtr (Ptr <struct clap_host> -> CString -> Ptr ())
+#field get_extension , FunPtr (Ptr <struct clap_host> -> CString -> IO (Ptr ()))
 #field request_restart , FunPtr (Ptr <struct clap_host> -> IO ())
 #field request_process , FunPtr (Ptr <struct clap_host> -> IO ())
 #field request_callback , FunPtr (Ptr <struct clap_host> -> IO ())
 #stoptype
 #synonym_t clap_host_t , <struct clap_host>
-#callback_t get_extension , Ptr <struct clap_host> -> CString -> Ptr ()
+#callback_t get_extension , Ptr <struct clap_host> -> CString -> IO (Ptr ())
 #callback_t request_restart , Ptr <struct clap_host> -> IO ()
 #callback_t request_process , Ptr <struct clap_host> -> IO ()
 #callback_t request_callback , Ptr <struct clap_host> -> IO ()
