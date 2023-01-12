@@ -5,8 +5,8 @@ module Clap.Interface.Extension.Foreign.AudioPorts where
 import Foreign.Ptr
 #strict_import
 
-import Clap.Interface.Extension.Foreign....Plugin
-import Clap.Interface.Extension.Foreign....StringSizes
+import Clap.Interface.Foreign.Host
+import Clap.Interface.Foreign.Plugin
 #globalarray CLAP_EXT_AUDIO_PORTS , CChar
 #globalarray CLAP_PORT_MONO , CChar
 #globalarray CLAP_PORT_STEREO , CChar
@@ -46,9 +46,11 @@ import Clap.Interface.Extension.Foreign....StringSizes
         } clap_plugin_audio_ports_t; -}
 #starttype struct clap_plugin_audio_ports
 #field count , FunPtr (Ptr <struct clap_plugin> -> CInt -> CUInt)
-#field get , FunPtr (Ptr <struct clap_plugin> -> CUInt -> CInt -> Ptr <struct clap_audio_port_info> -> CInt)
+#field get , FunPtr (Ptr <struct clap_plugin> -> CUInt -> CInt -> Ptr <struct clap_audio_port_info> -> CBool)
 #stoptype
 #synonym_t clap_plugin_audio_ports_t , <struct clap_plugin_audio_ports>
+#callback_t count , Ptr <struct clap_plugin> -> CInt -> CUInt
+#callback_t get , Ptr <struct clap_plugin> -> CUInt -> CInt -> Ptr <struct clap_audio_port_info> -> CBool
 {- enum {
     CLAP_AUDIO_PORTS_RESCAN_NAMES = 1 << 0,
     CLAP_AUDIO_PORTS_RESCAN_FLAGS = 1 << 1,
@@ -69,7 +71,9 @@ import Clap.Interface.Extension.Foreign....StringSizes
             void (* rescan)(const clap_host_t * host, uint32_t flags);
         } clap_host_audio_ports_t; -}
 #starttype struct clap_host_audio_ports
-#field is_rescan_flag_supported , FunPtr (Ptr <struct clap_host> -> CUInt -> CInt)
+#field is_rescan_flag_supported , FunPtr (Ptr <struct clap_host> -> CUInt -> CBool)
 #field rescan , FunPtr (Ptr <struct clap_host> -> CUInt -> IO ())
 #stoptype
 #synonym_t clap_host_audio_ports_t , <struct clap_host_audio_ports>
+#callback_t is_rescan_flag_supported , Ptr <struct clap_host> -> CUInt -> CBool
+#callback_t rescan , Ptr <struct clap_host> -> CUInt -> IO ()

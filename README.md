@@ -34,7 +34,7 @@ Clap version: 1.1.6
 ## Extensions
 
 - [ ] audio-ports-config
-- [ ] audio-ports
+- [x] audio-ports
 - [ ] audio-registry
 - [x] gui
 - [ ] latency
