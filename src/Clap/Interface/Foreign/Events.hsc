@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 #include <bindings.dsl.h>
-#include <events.h>
+#include <clap/events.h>
 module Clap.Interface.Foreign.Events where
 import Foreign.Ptr
 #strict_import

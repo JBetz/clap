@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 #include <bindings.dsl.h>
-#include "include/ext/posix-fd-support.h"
+#include <clap/ext/posix-fd-support.h>
 module Clap.Interface.Extension.Foreign.PosixFdSupport where
 import Foreign.Ptr
 #strict_import

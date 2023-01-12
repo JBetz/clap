@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 #include <bindings.dsl.h>
-#include "include/ext/audio-ports.h"
+#include <clap/ext/audio-ports.h>
 module Clap.Interface.Extension.Foreign.AudioPorts where
 import Foreign.Ptr
 #strict_import

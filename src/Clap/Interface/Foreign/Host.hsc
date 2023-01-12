@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 #include <bindings.dsl.h>
-#include <host.h>
+#include <clap/host.h>
 module Clap.Interface.Foreign.Host where
 import Foreign.Ptr
 #strict_import

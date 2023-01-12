@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 #include <bindings.dsl.h>
-#include "include/ext/tail.h"
+#include <clap/ext/tail.h>
 module Clap.Interface.Extension.Foreign.Tail where
 import Foreign.Ptr
 #strict_import

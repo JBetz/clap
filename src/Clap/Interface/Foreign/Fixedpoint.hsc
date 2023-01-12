@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 #include <bindings.dsl.h>
-#include <fixedpoint.h>
+#include <clap/fixedpoint.h>
 module Clap.Interface.Foreign.Fixedpoint where
 import Foreign.Ptr
 #strict_import

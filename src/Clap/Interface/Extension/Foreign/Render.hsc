@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 #include <bindings.dsl.h>
-#include <ext/render.h>
+#include <clap/ext/render.h>
 module Clap.Interface.Extension.Foreign.Render where
 import Foreign.Ptr
 #strict_import

@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 #include <bindings.dsl.h>
-#include <process.h>
+#include <clap/process.h>
 module Clap.Interface.Foreign.Process where
 import Foreign.Ptr
 #strict_import

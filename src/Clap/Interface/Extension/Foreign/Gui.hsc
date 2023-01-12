@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 #include <bindings.dsl.h>
-#include <ext/gui.h>
+#include <clap/ext/gui.h>
 module Clap.Interface.Extension.Foreign.Gui where
 import Foreign.Ptr
 #strict_import

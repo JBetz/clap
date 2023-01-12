@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 #include <bindings.dsl.h>
-#include "include/ext/note-name.h"
+#include <clap/ext/note-name.h>
 module Clap.Interface.Extension.Foreign.NoteName where
 import Foreign.Ptr
 #strict_import

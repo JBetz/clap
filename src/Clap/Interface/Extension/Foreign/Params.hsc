@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 #include <bindings.dsl.h>
-#include "include/ext/params.h"
+#include <clap/ext/params.h>
 module Clap.Interface.Extension.Foreign.Params where
 import Foreign.Ptr
 #strict_import

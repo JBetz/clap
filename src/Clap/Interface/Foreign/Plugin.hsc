@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 #include <bindings.dsl.h>
-#include <plugin.h>
+#include <clap/plugin.h>
 module Clap.Interface.Foreign.Plugin where
 import Foreign.Ptr
 #strict_import

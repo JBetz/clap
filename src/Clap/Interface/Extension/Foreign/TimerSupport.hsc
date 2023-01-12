@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 #include <bindings.dsl.h>
-#include "include/ext/timer-support.h"
+#include <clap/ext/timer-support.h>
 module Clap.Interface.Extension.Foreign.TimerSupport where
 import Foreign.Ptr
 #strict_import

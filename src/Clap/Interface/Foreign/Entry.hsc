@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 
 #include <bindings.dsl.h>
-#include <entry.h>
+#include <clap/entry.h>
 
 module Clap.Interface.Foreign.Entry where
 

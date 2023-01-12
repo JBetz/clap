@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 #include <bindings.dsl.h>
-#include "include/ext/thread-pool.h"
+#include <clap/ext/thread-pool.h>
 module Clap.Interface.Extension.Foreign.ThreadPool where
 import Foreign.Ptr
 #strict_import

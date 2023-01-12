@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 #include <bindings.dsl.h>
-#include "../../include/stream.h"
+#include <clap/stream.h>
 module Clap.Stream where
 import Foreign.Ptr
 #strict_import

@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 #include <bindings.dsl.h>
-#include "include/ext/event-registry.h"
+#include <clap/ext/event-registry.h>
 module Clap.Interface.Extension.Foreign.EventRegistry where
 import Foreign.Ptr
 #strict_import

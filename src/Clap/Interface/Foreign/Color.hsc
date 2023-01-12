@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 #include <bindings.dsl.h>
-#include <color.h>
+#include <clap/color.h>
 module Clap.Interface.Foreign.Color where
 import Foreign.Ptr
 #strict_import

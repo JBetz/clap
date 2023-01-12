@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 {-# LANGUAGE CApiFFI #-}
 #include <bindings.dsl.h>
-#include <version.h>
+#include <clap/version.h>
 module Clap.Interface.Foreign.Version where
 import Foreign.Ptr
 #strict_import

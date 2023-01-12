@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 #include <bindings.dsl.h>
-#include <audio-buffer.h>
+#include <clap/audio-buffer.h>
 module Clap.Interface.Foreign.AudioBuffer where
 import Foreign.Ptr
 #strict_import

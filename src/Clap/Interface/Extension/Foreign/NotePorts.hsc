@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 #include <bindings.dsl.h>
-#include "include/ext/note-ports.h"
+#include <clap/ext/note-ports.h>
 module Clap.Interface.Extension.Foreign.NotePorts where
 import Foreign.Ptr
 #strict_import

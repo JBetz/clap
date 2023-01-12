@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 #include <bindings.dsl.h>
-#include <ext/log.h>
+#include <clap/ext/log.h>
 module Clap.Interface.Extension.Foreign.Log where
 import Foreign.Ptr
 #strict_import

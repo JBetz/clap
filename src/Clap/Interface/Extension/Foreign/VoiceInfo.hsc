@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 #include <bindings.dsl.h>
-#include "include/ext/voice-info.h"
+#include <clap/ext/voice-info.h>
 module Clap.Interface.Extension.Foreign.VoiceInfo where
 import Foreign.Ptr
 #strict_import
