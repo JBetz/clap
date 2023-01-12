@@ -18,7 +18,7 @@ Clap version: 1.1.6
 - [ ] clap
 - [x] color
 - [x] entry
-- [ ] events
+- [x] events
 - [x] fixedpoint
 - [x] host
 - [x] id

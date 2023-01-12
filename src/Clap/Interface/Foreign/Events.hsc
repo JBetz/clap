@@ -255,6 +255,8 @@ import Clap.Interface.Foreign.Id
 #field get , FunPtr (Ptr <struct clap_input_events> -> CUInt -> Ptr <struct clap_event_header>)
 #stoptype
 #synonym_t clap_input_events_t , <struct clap_input_events>
+#callback_t size , Ptr <struct clap_input_events> -> CUInt
+#callback_t get , Ptr <struct clap_input_events> -> CUInt -> Ptr <struct clap_event_header>
 {- typedef struct clap_output_events {
             void * ctx;
             _Bool (* try_push)(const struct clap_output_events * list,
@@ -265,3 +267,4 @@ import Clap.Interface.Foreign.Id
 #field try_push , FunPtr (Ptr <struct clap_output_events> -> Ptr <struct clap_event_header> -> CInt)
 #stoptype
 #synonym_t clap_output_events_t , <struct clap_output_events>
+#callback_t try_push , Ptr <struct clap_output_events> -> Ptr <struct clap_event_header> -> CInt
