@@ -16,7 +16,7 @@ Clap version: 1.1.6
 
 - [x] audio-buffer
 - [ ] clap
-- [ ] color
+- [x] color
 - [x] entry
 - [ ] events
 - [ ] fixedpoint
