@@ -1,5 +1,5 @@
-module Clap.StringSizes where
+module Clap.Interface.StringSizes where
 
-clapNameSize, clapPathSize :: Int
-clapNameSize = 256
-clapPathSize = 1024
+nameSize, pathSize :: Int
+nameSize = 256
+pathSize = 1024
