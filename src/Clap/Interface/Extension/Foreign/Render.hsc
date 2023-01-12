@@ -6,7 +6,7 @@ import Foreign.Ptr
 #strict_import
 
 import Clap.Interface.Foreign.Plugin
-#globalarray CLAP_EXT_RENDER , CChar
+-- #globalarray CLAP_EXT_RENDER , CChar
 {- enum {
     CLAP_RENDER_REALTIME = 0, CLAP_RENDER_OFFLINE = 1
 }; -}

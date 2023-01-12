@@ -8,7 +8,7 @@ import Foreign.Ptr
 import Clap.Interface.Foreign.Plugin
 import Clap.Interface.Foreign.Host
 
-#globalarray CLAP_EXT_LOG , CChar
+-- #globalarray CLAP_EXT_LOG , CChar
 {- enum {
     CLAP_LOG_DEBUG = 0,
     CLAP_LOG_INFO = 1,
