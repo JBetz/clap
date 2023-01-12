@@ -27,7 +27,7 @@ Clap version: 1.1.6
 - [x] plugin-invalidation
 - [x] plugin
 - [ ] process
-- [ ] stream
+- [x] stream
 - [x] string-sizes
 - [x] version
 
