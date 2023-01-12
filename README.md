@@ -24,7 +24,7 @@ Clap version: 1.1.6
 - [x] id
 - [x] plugin-factory
 - [x] plugin-features
-- [ ] plugin-invalidation
+- [x] plugin-invalidation
 - [x] plugin
 - [ ] process
 - [ ] stream

@@ -1,12 +1,10 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 #include <bindings.dsl.h>
-#include "../../include/plugin-invalidation.h"
-module Clap.PluginInvalidation where
+#include <clap/plugin-invalidation.h>
+module Clap.Interface.Foreign.PluginInvalidation where
 import Foreign.Ptr
 #strict_import
 
-import Clap.Private.Std
-import Clap.Private.Macros
 {- typedef struct clap_plugin_invalidation_source {
             const char * directory;
             const char * filename_glob;
@@ -31,3 +29,6 @@ import Clap.Private.Macros
 #field refresh , FunPtr (Ptr <struct clap_plugin_invalidation_factory> -> CInt)
 #stoptype
 #synonym_t clap_plugin_invalidation_factory_t , <struct clap_plugin_invalidation_factory>
+#callback_t count , Ptr <struct clap_plugin_invalidation_factory> -> CUInt
+#callback_t get , Ptr <struct clap_plugin_invalidation_factory> -> CUInt -> Ptr <struct clap_plugin_invalidation_source>
+#callback_t refresh , Ptr <struct clap_plugin_invalidation_factory> -> CInt
