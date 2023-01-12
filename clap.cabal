@@ -41,11 +41,13 @@ library
                       Clap.Interface.Extension.Gui,
                       Clap.Interface.Extension.Log,
                       Clap.Interface.Extension.Render,
-                      
+                      Clap.Interface.Extension.ThreadCheck,
+
                       Clap.Interface.Extension.Foreign.AudioPorts,
                       Clap.Interface.Extension.Foreign.Gui,
                       Clap.Interface.Extension.Foreign.Log,
-                      Clap.Interface.Extension.Foreign.Render
+                      Clap.Interface.Extension.Foreign.Render,
+                      Clap.Interface.Extension.Foreign.ThreadCheck
     build-depends:    base,
                       bindings-DSL,
                       containers,

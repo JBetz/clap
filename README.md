@@ -46,7 +46,7 @@ Clap version: 1.1.6
 - [x] render
 - [ ] state
 - [ ] tail
-- [ ] thread-check
+- [x] thread-check
 - [ ] thread-pool
 - [ ] timer-support
 - [ ] voice-info
