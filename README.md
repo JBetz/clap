@@ -19,7 +19,7 @@ Clap version: 1.1.6
 - [x] color
 - [x] entry
 - [ ] events
-- [ ] fixedpoint
+- [x] fixedpoint
 - [x] host
 - [x] id
 - [x] plugin-factory
