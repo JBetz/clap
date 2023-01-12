@@ -9,12 +9,15 @@ import Foreign.Ptr
 
 data Extensions = Extensions
     { extensions_gui :: Maybe PluginGuiHandle
-    , extensions_log :: Maybe ()
+    , extensions_log :: Maybe HostLogHandle
     , extensions_render :: Maybe PluginRenderHandle
     } deriving (Show)
 
 initializeExtensions :: PluginHandle ->  IO Extensions
 initializeExtensions plugin = Extensions
-    <$> (fmap (PluginGuiHandle . castPtr) <$> getExtension plugin Gui.extensionId)
-    <*> fmap (const Nothing) (getExtension plugin Log.extensionId)
-    <*> (fmap (PluginRenderHandle . castPtr) <$> getExtension plugin Render.extensionId)
+    <$> initializeExtension PluginGuiHandle Gui.extensionId
+    <*> initializeExtension HostLogHandle Log.extensionId
+    <*> initializeExtension PluginRenderHandle Render.extensionId
+    where 
+        initializeExtension wrapper id =
+            fmap (wrapper . castPtr) <$> getExtension plugin id 

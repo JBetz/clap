@@ -36,3 +36,4 @@ import Clap.Interface.Foreign.Host
 #field log , FunPtr (Ptr <struct clap_host> -> CInt -> CString -> IO ())
 #stoptype
 #synonym_t clap_host_log_t , <struct clap_host_log>
+#callback_t log , Ptr <struct clap_host> -> CInt -> CString -> IO ()
