@@ -14,7 +14,7 @@ Clap version: 1.1.6
 
 ## Modules
 
-- [ ] audio-buffer
+- [x] audio-buffer
 - [ ] clap
 - [ ] color
 - [x] entry
