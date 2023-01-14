@@ -26,6 +26,9 @@ toCUInt = fromIntegral
 fromCDouble :: CDouble -> Double
 fromCDouble (CDouble double) = double
 
+fromCChars :: [CChar] -> String
+fromCChars = fmap castCCharToChar
+
 pureIf :: (Alternative m) => Bool -> a -> m a
 pureIf b a = if b then pure a else empty
 
