@@ -55,12 +55,21 @@ count pluginParameters plugin = do
 getInfo :: PluginParametersHandle -> PluginHandle -> Word32 -> IO (Maybe ParameterInfo)
 getInfo pluginParameters plugin index = do
     funPtr <- peek $ p'clap_plugin_params'get_info pluginParameters
-    cParamInfoPtr <- new $ C'clap_param_info {}
+    cParamInfoPtr <- new $ C'clap_param_info 
+        { c'clap_param_info'id = 0
+        , c'clap_param_info'flags = 0
+        , c'clap_param_info'cookie = nullPtr
+        , c'clap_param_info'name = [CChar 0]
+        , c'clap_param_info'module = [CChar 0]
+        , c'clap_param_info'min_value = 0 
+        , c'clap_param_info'max_value = 0
+        , c'clap_param_info'default_value = 0
+        }
     let result = toBool $ mK'get_info funPtr plugin (fromIntegral index) cParamInfoPtr
     cParamInfo <- peek cParamInfoPtr
     if result
         then do
-            pure $ Just  $ParameterInfo
+            pure $ Just $ ParameterInfo
                 { parameterInfo_id = ClapId $ fromIntegral $ c'clap_param_info'id cParamInfo
                 , parameterInfo_flags = intToFlags $ fromIntegral $ c'clap_param_info'flags cParamInfo
                 , parameterInfo_cookie = c'clap_param_info'cookie cParamInfo
@@ -75,7 +84,7 @@ getInfo pluginParameters plugin index = do
 getValue :: PluginParametersHandle -> PluginHandle -> ClapId -> IO (Maybe Double)
 getValue pluginParameters plugin (ClapId parameterId) = do
     funPtr <- peek $ p'clap_plugin_params'get_value pluginParameters
-    cValue <- new (undefined :: CDouble)
+    cValue <- new 0
     let result = toBool $ mK'get_value funPtr plugin (fromIntegral parameterId) cValue
     if result
         then pure Nothing
@@ -84,7 +93,7 @@ getValue pluginParameters plugin (ClapId parameterId) = do
 valueToText :: PluginParametersHandle -> PluginHandle -> ClapId -> Double -> Word32 -> IO (Maybe String)
 valueToText pluginParameters plugin (ClapId parameterId) value textLength = do
     funPtr <- peek $ p'clap_plugin_params'value_to_text pluginParameters
-    cText <- newCString (undefined :: String)
+    cText <- newCString ""
     let result = toBool $ mK'value_to_text funPtr plugin (fromIntegral parameterId) (CDouble value) cText (fromIntegral textLength)
     if result
         then pure Nothing
@@ -94,7 +103,7 @@ textToValue :: PluginParametersHandle -> PluginHandle -> ClapId -> String -> IO 
 textToValue pluginParameters plugin (ClapId parameterId) text = do
     funPtr <- peek $ p'clap_plugin_params'text_to_value pluginParameters
     withCString text $ \cText -> do
-        cDoublePtr <- new (undefined :: CDouble)
+        cDoublePtr <- new 0
         let result = toBool $ mK'text_to_value funPtr plugin (fromIntegral parameterId) cText cDoublePtr
         if result
             then pure Nothing

@@ -9,6 +9,7 @@ import Clap.Interface.Id
 import Clap.Interface.Plugin
 import Data.Int
 import Foreign.C.String
+import Foreign.C.Types
 import Foreign.Marshal.Utils
 import Foreign.Ptr
 import Foreign.Storable
@@ -68,7 +69,14 @@ count pluginAudioPorts plugin isInput = do
 get :: PluginAudioPortsHandle -> PluginHandle -> Int32 -> Bool -> IO (Maybe AudioPortInfo)
 get pluginAudioPorts plugin index isInput = do
     funPtr <- peek $ p'clap_plugin_audio_ports'get pluginAudioPorts
-    cAudioPortInfoPtr <- new $ C'clap_audio_port_info {}
+    cAudioPortInfoPtr <- new $ C'clap_audio_port_info 
+        { c'clap_audio_port_info'id = 0 
+        , c'clap_audio_port_info'name = [CChar 0]
+        , c'clap_audio_port_info'flags = 0
+        , c'clap_audio_port_info'channel_count = 0
+        , c'clap_audio_port_info'port_type = nullPtr
+        , c'clap_audio_port_info'in_place_pair = 0
+        }
     let isSuccessful = toBool $ mK'get funPtr plugin (fromIntegral index) (fromBool isInput) cAudioPortInfoPtr
     if isSuccessful
         then do

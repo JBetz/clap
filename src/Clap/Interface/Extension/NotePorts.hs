@@ -7,6 +7,7 @@ import Clap.Interface.Plugin
 import Clap.Interface.Extension.Foreign.NotePorts
 import Data.Word
 import Foreign.C.String
+import Foreign.C.Types
 import Foreign.Marshal.Utils
 import Foreign.Ptr
 import Foreign.Storable
@@ -35,7 +36,12 @@ count pluginNotePorts plugin isInput = do
 get :: PluginNotePortsHandle -> PluginHandle -> Word32 -> Bool -> IO (Maybe NotePortInfo)
 get pluginNotePorts plugin index isInput = do
     funPtr <- peek $ p'clap_plugin_note_ports'get pluginNotePorts
-    cNotePortInfoPtr <- new $ C'clap_note_port_info {}
+    cNotePortInfoPtr <- new $ C'clap_note_port_info 
+        { c'clap_note_port_info'id = 0
+        , c'clap_note_port_info'supported_dialects = 0
+        , c'clap_note_port_info'preferred_dialect = 0
+        , c'clap_note_port_info'name = [CChar 0]
+        }
     let result = toBool $ mK'get funPtr plugin (fromIntegral index) (fromBool isInput) cNotePortInfoPtr
     cNotePortInfo <- peek cNotePortInfoPtr
     if result
