@@ -10,11 +10,11 @@ import Foreign.Marshal.Utils
 import Foreign.Ptr
 import Foreign.Storable
 
-newtype HostHandle = HostHandle { unHostHandle :: Ptr C'clap_host }
+type HostHandle = Ptr C'clap_host
 
-data HostConfig d = HostConfig
+data HostConfig = HostConfig
     { hostConfig_clapVersion :: ClapVersion
-    , hostConfig_data :: Storable d => d
+    , hostConfig_data :: Ptr ()
     , hostConfig_name :: String
     , hostConfig_vendor :: String
     , hostConfig_url :: String
@@ -25,24 +25,22 @@ data HostConfig d = HostConfig
     , hostConfig_requestCallback :: HostHandle -> IO ()
     }
 
-createHost :: Storable d => HostConfig d -> IO HostHandle
+createHost :: HostConfig -> IO HostHandle
 createHost (HostConfig clapVersion data' name vendor url version getExtension requestRestart requestProcess requestCallback) = do
     let clapVersionC = toStruct clapVersion
-    dataC <- new data'
     nameC <- newCString name
     vendorC <- newCString vendor
     urlC <- newCString url
     versionC <- newCString version
     getExtensionC <- Clap.Interface.Foreign.Host.mk'get_extension (\cHostHandle cString -> do
-        let hostHandle = HostHandle cHostHandle
         string <- peekCString cString
-        getExtension hostHandle string)
-    requestRestartC <- mk'request_restart (requestRestart . HostHandle)
-    requestProcessC <- mk'request_process (requestProcess . HostHandle)
-    requestCallbackC <- mk'request_callback (requestCallback . HostHandle)
-    hostC <- new $ C'clap_host
+        getExtension cHostHandle string)
+    requestRestartC <- mk'request_restart requestRestart
+    requestProcessC <- mk'request_process requestProcess
+    requestCallbackC <- mk'request_callback requestCallback
+    new $ C'clap_host
         { c'clap_host'clap_version = clapVersionC
-        , c'clap_host'host_data = castPtr dataC
+        , c'clap_host'host_data = data'
         , c'clap_host'name = nameC
         , c'clap_host'vendor = vendorC
         , c'clap_host'url = urlC
@@ -52,4 +50,3 @@ createHost (HostConfig clapVersion data' name vendor url version getExtension re
         , c'clap_host'request_process = requestProcessC
         , c'clap_host'request_callback = requestCallbackC
         }
-    pure $ HostHandle hostC
