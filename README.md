@@ -15,7 +15,6 @@ Clap version: 1.1.6
 ## Modules
 
 - [x] audio-buffer
-- [ ] clap
 - [x] color
 - [x] entry
 - [x] events
@@ -40,7 +39,7 @@ Clap version: 1.1.6
 - [ ] latency
 - [x] log
 - [ ] note-name
-- [ ] note-ports
+- [x] note-ports
 - [ ] params
 - [ ] posix-fd-support
 - [x] render

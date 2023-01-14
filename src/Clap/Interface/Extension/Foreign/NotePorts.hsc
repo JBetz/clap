@@ -5,8 +5,9 @@ module Clap.Interface.Extension.Foreign.NotePorts where
 import Foreign.Ptr
 #strict_import
 
-import Clap.Interface.Extension.Foreign....Plugin
-import Clap.Interface.Extension.Foreign....StringSizes
+import Clap.Interface.Foreign.Host
+import Clap.Interface.Foreign.Plugin
+import Clap.Interface.StringSizes
 #globalarray CLAP_EXT_NOTE_PORTS , CChar
 {- enum clap_note_dialect {
     CLAP_NOTE_DIALECT_CLAP = 1 << 0,
@@ -40,10 +41,12 @@ import Clap.Interface.Extension.Foreign....StringSizes
                           clap_note_port_info_t * info);
         } clap_plugin_note_ports_t; -}
 #starttype struct clap_plugin_note_ports
-#field count , FunPtr (Ptr <struct clap_plugin> -> CInt -> CUInt)
-#field get , FunPtr (Ptr <struct clap_plugin> -> CUInt -> CInt -> Ptr <struct clap_note_port_info> -> CInt)
+#field count , FunPtr (Ptr <struct clap_plugin> -> CBool -> CUInt)
+#field get , FunPtr (Ptr <struct clap_plugin> -> CUInt -> CInt -> Ptr <struct clap_note_port_info> -> CBool)
 #stoptype
 #synonym_t clap_plugin_note_ports_t , <struct clap_plugin_note_ports>
+#callback_t count , Ptr <struct clap_plugin> -> CBool -> CUInt
+#callback_t get , Ptr <struct clap_plugin> -> CUInt -> CInt -> Ptr <struct clap_note_port_info> -> CBool
 {- enum {
     CLAP_NOTE_PORTS_RESCAN_ALL = 1 << 0,
     CLAP_NOTE_PORTS_RESCAN_NAMES = 1 << 1
@@ -59,3 +62,5 @@ import Clap.Interface.Extension.Foreign....StringSizes
 #field rescan , FunPtr (Ptr <struct clap_host> -> CUInt -> IO ())
 #stoptype
 #synonym_t clap_host_note_ports_t , <struct clap_host_note_ports>
+#callback_t supported_dialects , Ptr <struct clap_host> -> CUInt
+#callback_t rescan , Ptr <struct clap_host> -> CUInt -> IO ()
