@@ -43,6 +43,7 @@ library
                       Clap.Interface.Extension.Log,
                       Clap.Interface.Extension.NotePorts,
                       Clap.Interface.Extension.Render,
+                      Clap.Interface.Extension.State,
                       Clap.Interface.Extension.Tail,
                       Clap.Interface.Extension.ThreadCheck,
 
@@ -52,6 +53,7 @@ library
                       Clap.Interface.Extension.Foreign.Log,
                       Clap.Interface.Extension.Foreign.NotePorts,
                       Clap.Interface.Extension.Foreign.Render,
+                      Clap.Interface.Extension.Foreign.State,
                       Clap.Interface.Extension.Foreign.Tail,
                       Clap.Interface.Extension.Foreign.ThreadCheck
     build-depends:    base,
