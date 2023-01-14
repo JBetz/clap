@@ -36,7 +36,7 @@ Clap version: 1.1.6
 - [x] audio-ports
 - [ ] audio-registry
 - [x] gui
-- [ ] latency
+- [x] latency
 - [x] log
 - [ ] note-name
 - [x] note-ports

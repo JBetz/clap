@@ -39,6 +39,7 @@ library
                       
                       Clap.Interface.Extension.AudioPorts,
                       Clap.Interface.Extension.Gui,
+                      Clap.Interface.Extension.Latency,
                       Clap.Interface.Extension.Log,
                       Clap.Interface.Extension.NotePorts,
                       Clap.Interface.Extension.Render,
@@ -46,6 +47,7 @@ library
 
                       Clap.Interface.Extension.Foreign.AudioPorts,
                       Clap.Interface.Extension.Foreign.Gui,
+                      Clap.Interface.Extension.Foreign.Latency,
                       Clap.Interface.Extension.Foreign.Log,
                       Clap.Interface.Extension.Foreign.NotePorts,
                       Clap.Interface.Extension.Foreign.Render,
