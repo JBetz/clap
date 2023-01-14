@@ -5,8 +5,9 @@ module Clap.Interface.Extension.Foreign.Params where
 import Foreign.Ptr
 #strict_import
 
-import Clap.Interface.Extension.Foreign....Plugin
-import Clap.Interface.Extension.Foreign....StringSizes
+import Clap.Interface.Foreign.Events
+import Clap.Interface.Foreign.Host
+import Clap.Interface.Foreign.Plugin
 #globalarray CLAP_EXT_PARAMS , CChar
 {- enum {
     CLAP_PARAM_IS_STEPPED = 1 << 0,
@@ -88,13 +89,19 @@ import Clap.Interface.Extension.Foreign....StringSizes
         } clap_plugin_params_t; -}
 #starttype struct clap_plugin_params
 #field count , FunPtr (Ptr <struct clap_plugin> -> CUInt)
-#field get_info , FunPtr (Ptr <struct clap_plugin> -> CUInt -> Ptr <struct clap_param_info> -> CInt)
-#field get_value , FunPtr (Ptr <struct clap_plugin> -> CUInt -> Ptr CDouble -> CInt)
-#field value_to_text , FunPtr (Ptr <struct clap_plugin> -> CUInt -> CDouble -> CString -> CUInt -> CInt)
-#field text_to_value , FunPtr (Ptr <struct clap_plugin> -> CUInt -> CString -> Ptr CDouble -> CInt)
+#field get_info , FunPtr (Ptr <struct clap_plugin> -> CUInt -> Ptr <struct clap_param_info> -> CBool)
+#field get_value , FunPtr (Ptr <struct clap_plugin> -> CUInt -> Ptr CDouble -> CBool)
+#field value_to_text , FunPtr (Ptr <struct clap_plugin> -> CUInt -> CDouble -> CString -> CUInt -> CBool)
+#field text_to_value , FunPtr (Ptr <struct clap_plugin> -> CUInt -> CString -> Ptr CDouble -> CBool)
 #field flush , FunPtr (Ptr <struct clap_plugin> -> Ptr <struct clap_input_events> -> Ptr <struct clap_output_events> -> IO ())
 #stoptype
 #synonym_t clap_plugin_params_t , <struct clap_plugin_params>
+#callback_t count , Ptr <struct clap_plugin> -> CUInt
+#callback_t get_info , Ptr <struct clap_plugin> -> CUInt -> Ptr <struct clap_param_info> -> CBool
+#callback_t get_value , Ptr <struct clap_plugin> -> CUInt -> Ptr CDouble -> CBool
+#callback_t value_to_text , Ptr <struct clap_plugin> -> CUInt -> CDouble -> CString -> CUInt -> CBool
+#callback_t text_to_value , Ptr <struct clap_plugin> -> CUInt -> CString -> Ptr CDouble -> CBool
+#callback_t flush , Ptr <struct clap_plugin> -> Ptr <struct clap_input_events> -> Ptr <struct clap_output_events> -> IO ()
 {- enum {
     CLAP_PARAM_RESCAN_VALUES = 1 << 0,
     CLAP_PARAM_RESCAN_TEXT = 1 << 1,
@@ -131,3 +138,6 @@ import Clap.Interface.Extension.Foreign....StringSizes
 #field request_flush , FunPtr (Ptr <struct clap_host> -> IO ())
 #stoptype
 #synonym_t clap_host_params_t , <struct clap_host_params>
+#callback_t rescan , Ptr <struct clap_host> -> CUInt -> IO ()
+#callback_t clear , Ptr <struct clap_host> -> CUInt -> CUInt -> IO ()
+#callback_t request_flush , Ptr <struct clap_host> -> IO ()

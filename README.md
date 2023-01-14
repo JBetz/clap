@@ -40,7 +40,7 @@ Clap version: 1.1.6
 - [x] log
 - [ ] note-name
 - [x] note-ports
-- [ ] params
+- [x] params
 - [ ] posix-fd-support
 - [x] render
 - [x] state
