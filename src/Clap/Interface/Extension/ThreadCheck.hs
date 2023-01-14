@@ -9,11 +9,11 @@ import Foreign.Storable
 type HostThreadCheckHandle = Ptr C'clap_host_thread_check
     
 isMainThread :: HostThreadCheckHandle -> HostHandle -> IO Bool
-isMainThread hostThreadCheck (HostHandle host) = do
+isMainThread hostThreadCheck host = do
     funPtr <- peek $ p'clap_host_thread_check'is_main_thread hostThreadCheck
     pure $ toBool $ mK'is_main_thread funPtr host
 
 isAudioThread :: HostThreadCheckHandle -> HostHandle -> IO Bool
-isAudioThread hostThreadCheck (HostHandle host) = do
+isAudioThread hostThreadCheck host = do
     funPtr <- peek $ p'clap_host_thread_check'is_audio_thread hostThreadCheck
     pure $ toBool $ mK'is_audio_thread funPtr host

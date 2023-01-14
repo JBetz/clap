@@ -17,19 +17,19 @@ data Extensions = Extensions
 
 initializeExtensions :: PluginHandle ->  IO Extensions
 initializeExtensions plugin = Extensions
-    <$> initializeExtension PluginGuiHandle Gui.extensionId
-    <*> initializeExtension HostLogHandle Log.extensionId
-    <*> initializeExtension PluginRenderHandle Render.extensionId
+    <$> initializeExtension Gui.extensionId
+    <*> initializeExtension Log.extensionId
+    <*> initializeExtension Render.extensionId
     where 
-        initializeExtension wrapper id =
-            fmap (wrapper . castPtr) <$> Plugin.getExtension plugin id 
+        initializeExtension id =
+            fmap castPtr <$> Plugin.getExtension plugin id 
 
 getExtension :: Extensions -> String -> Ptr ()
 getExtension extensions name = if
-    | name == Gui.extensionId -> extract extensions_gui unPluginGuiHandle
-    | name == Log.extensionId -> extract extensions_log unHostLogHandle
-    | name == Render.extensionId -> extract extensions_render unPluginRenderHandle
+    | name == Gui.extensionId -> extract extensions_gui
+    | name == Log.extensionId -> extract extensions_log
+    | name == Render.extensionId -> extract extensions_render
     | otherwise -> nullPtr
     where
-        extract selector unWrapper =
-            maybe nullPtr (castPtr . unWrapper) (selector extensions)
+        extract selector =
+            maybe nullPtr castPtr (selector extensions)

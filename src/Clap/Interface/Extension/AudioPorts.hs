@@ -58,16 +58,15 @@ data AudioPortInfo = AudioPortInfo
     , audioPortInfo_inPlacePair :: ClapId 
     }
 
-newtype PluginAudioPortsHandle = PluginAudioPortsHandle { unPluginPortsAudioHandle :: Ptr C'clap_plugin_audio_ports }
-    deriving (Show)
+type PluginAudioPortsHandle = Ptr C'clap_plugin_audio_ports
 
 count :: PluginAudioPortsHandle -> PluginHandle -> Bool -> IO Int32
-count (PluginAudioPortsHandle pluginAudioPorts) (PluginHandle plugin) isInput = do
+count pluginAudioPorts plugin isInput = do
     funPtr <- peek $ p'clap_plugin_audio_ports'count pluginAudioPorts
     pure $ fromIntegral $ mK'count funPtr plugin (fromBool isInput)
 
 get :: PluginAudioPortsHandle -> PluginHandle -> Int32 -> Bool -> IO (Maybe AudioPortInfo)
-get (PluginAudioPortsHandle pluginAudioPorts) (PluginHandle plugin) index isInput = do
+get pluginAudioPorts plugin index isInput = do
     funPtr <- peek $ p'clap_plugin_audio_ports'get pluginAudioPorts
     cAudioPortInfoPtr <- new $ C'clap_audio_port_info {}
     let isSuccessful = toBool $ mK'get funPtr plugin (fromIntegral index) (fromBool isInput) cAudioPortInfoPtr
@@ -96,15 +95,14 @@ data RescanFlag
     | RescanList
     deriving (Enum, Bounded)
 
-newtype HostAudioPortsHandle = HostAudioPortsHandle { unHostAudioPortsHandle :: Ptr C'clap_host_audio_ports }
-    deriving (Show)
+type HostAudioPortsHandle = Ptr C'clap_host_audio_ports
 
 isRescanFlagSupported :: HostAudioPortsHandle -> HostHandle -> RescanFlag -> IO Bool
-isRescanFlagSupported (HostAudioPortsHandle hostAudioPorts) (HostHandle host) flag = do
+isRescanFlagSupported hostAudioPorts host flag = do
     funPtr <- peek $ p'clap_host_audio_ports'is_rescan_flag_supported hostAudioPorts
     pure $ toBool $ mK'is_rescan_flag_supported funPtr host (fromIntegral $ flagsToInt [flag])
 
 rescan :: HostAudioPortsHandle -> HostHandle -> [RescanFlag] -> IO ()
-rescan (HostAudioPortsHandle hostAudioPorts) (HostHandle host) flags = do 
+rescan hostAudioPorts host flags = do 
     funPtr <- peek $ p'clap_host_audio_ports'rescan hostAudioPorts
     mK'rescan funPtr host (fromIntegral $ flagsToInt flags)

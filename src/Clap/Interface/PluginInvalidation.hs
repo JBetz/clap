@@ -7,8 +7,7 @@ import Foreign.Marshal.Utils
 import Foreign.Ptr
 import Foreign.Storable
 
-newtype PluginInvalidationFactoryHandle = PluginInvalidationFactoryHandle { unPluginInvalidationFactoryHandle :: Ptr C'clap_plugin_invalidation_factory }
-    deriving (Show)
+type PluginInvalidationFactoryHandle = Ptr C'clap_plugin_invalidation_factory
 
 data PluginInvalidationSource = PluginInvalidationSource
     { pluginInvalidationSource_directory :: String
@@ -17,12 +16,12 @@ data PluginInvalidationSource = PluginInvalidationSource
     }
 
 count :: PluginInvalidationFactoryHandle -> IO Word32
-count (PluginInvalidationFactoryHandle pluginInvalidationFactory) = do
+count pluginInvalidationFactory = do
     funPtr <- peek $ p'clap_plugin_invalidation_factory'count pluginInvalidationFactory
     pure $ fromIntegral $ mK'count funPtr pluginInvalidationFactory
 
 get :: PluginInvalidationFactoryHandle -> Word32 -> IO PluginInvalidationSource
-get (PluginInvalidationFactoryHandle pluginInvalidationFactory) index = do
+get pluginInvalidationFactory index = do
     funPtr <- peek $ p'clap_plugin_invalidation_factory'get pluginInvalidationFactory
     cPluginInvalidationSource <- peek $ mK'get funPtr pluginInvalidationFactory (fromIntegral index)
     directory <- peekCString $ c'clap_plugin_invalidation_source'directory cPluginInvalidationSource
@@ -34,6 +33,6 @@ get (PluginInvalidationFactoryHandle pluginInvalidationFactory) index = do
         }
 
 refresh :: PluginInvalidationFactoryHandle -> IO Bool
-refresh (PluginInvalidationFactoryHandle pluginInvalidationFactory) = do
+refresh pluginInvalidationFactory = do
     funPtr <- peek $ p'clap_plugin_invalidation_factory'refresh pluginInvalidationFactory
     pure $ toBool $ mK'refresh funPtr pluginInvalidationFactory

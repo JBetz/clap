@@ -6,8 +6,7 @@ import Foreign.Ptr
 import Foreign.Marshal.Array
 import Foreign.Marshal.Utils
 
-newtype AudioBufferHandle = AudioBufferHandle { unAudioBufferHandle :: Ptr C'clap_audio_buffer }
-    deriving (Show)
+type AudioBufferHandle = Ptr C'clap_audio_buffer
 
 data BufferData 
     = Data32 [[Float]]
@@ -33,4 +32,4 @@ createAudioBuffer bufferData latency constantMask = do
         , c'clap_audio_buffer'latency = fromIntegral latency
         , c'clap_audio_buffer'constant_mask = fromIntegral constantMask
         }
-    pure $ AudioBufferHandle cAudioBuffer
+    pure cAudioBuffer

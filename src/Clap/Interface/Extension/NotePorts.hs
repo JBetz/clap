@@ -28,12 +28,12 @@ data NotePortInfo = NotePortInfo
 type PluginNotePortsHandle = Ptr C'clap_plugin_note_ports
 
 count :: PluginNotePortsHandle -> PluginHandle -> Bool -> IO Word32 
-count pluginNotePorts (PluginHandle plugin) isInput = do
+count pluginNotePorts plugin isInput = do
     funPtr <- peek $ p'clap_plugin_note_ports'count pluginNotePorts
     pure $ fromIntegral $ mK'count funPtr plugin (fromBool isInput)
 
 get :: PluginNotePortsHandle -> PluginHandle -> Word32 -> Bool -> IO (Maybe NotePortInfo)
-get pluginNotePorts (PluginHandle plugin) index isInput = do
+get pluginNotePorts plugin index isInput = do
     funPtr <- peek $ p'clap_plugin_note_ports'get pluginNotePorts
     cNotePortInfoPtr <- new $ C'clap_note_port_info {}
     let result = toBool $ mK'get funPtr plugin (fromIntegral index) (fromBool isInput) cNotePortInfoPtr
@@ -55,12 +55,12 @@ data RescanFlag
 type HostNotePortsHandle = Ptr C'clap_host_note_ports
 
 supportedDialects :: HostNotePortsHandle -> HostHandle -> IO [NoteDialect] 
-supportedDialects hostNotePorts (HostHandle host) = do
+supportedDialects hostNotePorts host = do
     funPtr <- peek $ p'clap_host_note_ports'supported_dialects hostNotePorts
     pure $ intToFlags $ fromIntegral $ mK'supported_dialects funPtr host
 
 rescan :: HostNotePortsHandle -> HostHandle -> [RescanFlag] -> IO ()
-rescan hostNotePorts (HostHandle host) rescanFlags = do
+rescan hostNotePorts host rescanFlags = do
     funPtr <- peek $ p'clap_host_note_ports'rescan hostNotePorts
     mK'rescan funPtr host (fromIntegral $ flagsToInt rescanFlags)
 

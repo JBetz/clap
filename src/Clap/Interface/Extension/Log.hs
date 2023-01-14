@@ -10,8 +10,7 @@ import Foreign.Storable
 extensionId :: String
 extensionId = "clap.log"
 
-newtype HostLogHandle = HostLogHandle { unHostLogHandle :: Ptr C'clap_host_log }
-    deriving (Show)
+type HostLogHandle = Ptr C'clap_host_log
 
 data LogLevel 
     = LogDebug
@@ -26,10 +25,9 @@ data LogLevel
 createHostLog :: (HostHandle -> LogLevel -> String -> IO ()) -> IO HostLogHandle
 createHostLog logCallback = do
     logCallbackC <- mk'log (\cHostHandle cLogLevel cMessage -> do
-        let hostHandle = HostHandle cHostHandle
         let logLevel = toEnum $ fromIntegral cLogLevel
         message <- peekCString cMessage
-        logCallback hostHandle logLevel message)
-    hostLogC <- new $ C'clap_host_log
+        logCallback cHostHandle logLevel message)
+    new $ C'clap_host_log
         { c'clap_host_log'log = logCallbackC }
-    pure $ HostLogHandle hostLogC
+    

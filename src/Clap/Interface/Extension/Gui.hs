@@ -27,32 +27,28 @@ instance Show WindowAPI where
         X11 -> "x11"
         Wayland -> "wayland"
 
-newtype PluginGuiHandle = PluginGuiHandle { unPluginGuiHandle :: Ptr C'clap_plugin_gui }
-    deriving (Show)
+type PluginGuiHandle = Ptr C'clap_plugin_gui
 
-newtype GuiResizeHintsHandle = GuiResizeHintsHandle { unGuiResizeHintsHandle :: Ptr C'clap_gui_resize_hints }
-    deriving (Show)
+type GuiResizeHintsHandle = Ptr C'clap_gui_resize_hints
 
-newtype WindowHandle = WindowHandle { unWindowHandle :: Ptr C'clap_window }
-    deriving (Show)
+type WindowHandle = Ptr C'clap_window
 
 createWindow :: WindowAPI -> Ptr () -> IO WindowHandle
 createWindow api handle = do
     cApi <- newCString $ Prelude.show api
-    cWindow <- new $ C'clap_window
+    new $ C'clap_window
         { c'clap_window'api = cApi
         , c'clap_window'handle = handle
         }
-    pure $ WindowHandle cWindow
-
+    
 isApiSupported :: PluginGuiHandle -> PluginHandle -> WindowAPI -> Bool -> IO Bool
-isApiSupported (PluginGuiHandle pluginGui) (PluginHandle plugin) windowApi isFloating = do
+isApiSupported pluginGui plugin windowApi isFloating = do
     funPtr <- peek (p'clap_plugin_gui'is_api_supported pluginGui)
     withCString (Prelude.show windowApi) $ \cWindowApi ->
         pure $ toBool $ mK'is_api_supported funPtr plugin cWindowApi (fromBool isFloating)
 
 getPreferredApi :: PluginGuiHandle -> PluginHandle -> WindowAPI -> Bool -> IO Bool
-getPreferredApi (PluginGuiHandle pluginGui) (PluginHandle plugin) windowApi isFloating = do
+getPreferredApi pluginGui plugin windowApi isFloating = do
     funPtr <- peek $ p'clap_plugin_gui'get_preferred_api pluginGui
     -- TODO: Why does they require creating a new pointer?
     cWindowApi <- new $ case windowApi of 
@@ -64,72 +60,72 @@ getPreferredApi (PluginGuiHandle pluginGui) (PluginHandle plugin) windowApi isFl
     pure $ toBool $ mK'get_preferred_api funPtr plugin cWindowApi ptrIsFloating
 
 create :: PluginGuiHandle -> PluginHandle -> WindowAPI -> Bool -> IO Bool
-create (PluginGuiHandle pluginGui) (PluginHandle plugin) windowApi isFloating = do
+create pluginGui plugin windowApi isFloating = do
     funPtr <- peek $ p'clap_plugin_gui'create pluginGui
     withCString (Prelude.show windowApi) $ \cWindowApi ->
         pure $ toBool $ mK'create funPtr plugin cWindowApi (fromBool isFloating)
 
 destroy :: PluginGuiHandle -> PluginHandle -> IO ()
-destroy (PluginGuiHandle pluginGui) (PluginHandle plugin) = do
+destroy pluginGui plugin = do
     funPtr <- peek $ p'clap_plugin_gui'destroy pluginGui
     mK'destroy funPtr plugin
 
 setScale :: PluginGuiHandle -> PluginHandle -> Double -> IO Bool
-setScale (PluginGuiHandle pluginGui) (PluginHandle plugin) scale = do
+setScale pluginGui plugin scale = do
     funPtr <- peek $ p'clap_plugin_gui'set_scale pluginGui
     pure $ toBool $ mK'set_scale funPtr plugin (CDouble scale)
 
 getSize :: PluginGuiHandle -> PluginHandle -> Int -> Int -> IO Int
-getSize (PluginGuiHandle pluginGui) (PluginHandle plugin) width height = do
+getSize pluginGui plugin width height = do
     funPtr <- peek $ p'clap_plugin_gui'get_size pluginGui
     cWidth <- new $ fromIntegral width
     cHeight <- new $ fromIntegral height
     pure $ fromIntegral $ mK'get_size funPtr plugin cWidth cHeight
 
 canResize :: PluginGuiHandle -> PluginHandle -> IO Bool
-canResize (PluginGuiHandle pluginGui) (PluginHandle plugin) = do
+canResize pluginGui plugin = do
     funPtr <- peek $ p'clap_plugin_gui'can_resize pluginGui
     pure $ toBool $ mK'can_resize funPtr plugin
 
 getResizeHints :: PluginGuiHandle -> PluginHandle -> GuiResizeHintsHandle -> IO Bool
-getResizeHints (PluginGuiHandle pluginGui) (PluginHandle plugin) (GuiResizeHintsHandle guiResizeHints) = do
+getResizeHints pluginGui plugin guiResizeHints = do
     funPtr <- peek $ p'clap_plugin_gui'get_resize_hints pluginGui
     pure $ toBool $ mK'get_resize_hints funPtr plugin guiResizeHints
 
 adjustSize :: PluginGuiHandle -> PluginHandle -> Int -> Int -> IO Int
-adjustSize (PluginGuiHandle pluginGui) (PluginHandle plugin) width height = do
+adjustSize pluginGui plugin width height = do
     funPtr <- peek $ p'clap_plugin_gui'adjust_size pluginGui
     cWidth <- new $ fromIntegral width
     cHeight <- new $ fromIntegral height
     pure $ fromIntegral $ mK'adjust_size funPtr plugin cWidth cHeight
 
 setSize :: PluginGuiHandle -> PluginHandle -> Int -> Int -> IO Int
-setSize (PluginGuiHandle pluginGui) (PluginHandle plugin) width height = do
+setSize pluginGui plugin width height = do
     funPtr <- peek $ p'clap_plugin_gui'set_size pluginGui
     pure $ fromIntegral $ mK'set_size funPtr plugin (fromIntegral width) (fromIntegral height)
 
 setParent :: PluginGuiHandle -> PluginHandle -> WindowHandle -> IO Bool
-setParent (PluginGuiHandle pluginGui) (PluginHandle plugin) (WindowHandle window) = do
+setParent pluginGui plugin window = do
     funPtr <- peek $ p'clap_plugin_gui'set_parent pluginGui
     pure $ toBool $ mK'set_parent funPtr plugin window
 
 setTransient :: PluginGuiHandle -> PluginHandle -> WindowHandle -> IO Bool
-setTransient (PluginGuiHandle pluginGui) (PluginHandle plugin) (WindowHandle window) = do
+setTransient pluginGui plugin window = do
     funPtr <- peek $ p'clap_plugin_gui'set_transient pluginGui
     pure $ toBool $ mK'set_transient funPtr plugin window
 
 suggestTitle :: PluginGuiHandle -> PluginHandle -> String -> IO ()
-suggestTitle (PluginGuiHandle pluginGui) (PluginHandle plugin) title = do
+suggestTitle pluginGui plugin title = do
     funPtr <- peek $ p'clap_plugin_gui'suggest_title pluginGui
     withCString title $ \cTitle -> 
         mK'suggest_title funPtr plugin cTitle
 
 show :: PluginGuiHandle -> PluginHandle -> IO Bool
-show (PluginGuiHandle pluginGui) (PluginHandle plugin) = do
+show pluginGui plugin = do
     funPtr <- peek $ p'clap_plugin_gui'show pluginGui
     pure $ toBool $ mK'show funPtr plugin
 
 hide :: PluginGuiHandle -> PluginHandle -> IO Bool
-hide (PluginGuiHandle pluginGui) (PluginHandle plugin) = do
+hide pluginGui plugin = do
     funPtr <- peek $ p'clap_plugin_gui'hide pluginGui
     pure $ toBool $ mK'hide funPtr plugin

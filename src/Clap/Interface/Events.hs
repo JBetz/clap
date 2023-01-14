@@ -15,8 +15,6 @@ import Foreign.Marshal.Utils
 import Foreign.Ptr
 import Foreign.Storable
 
-newtype EventHandle = EventHandle { unEventHandle :: Ptr () }
-
 coreEventSpaceId :: Word16
 coreEventSpaceId = 0
 
@@ -136,7 +134,7 @@ data ParamModEvent = ParamModEvent
     , paramModEvent_amount :: Double 
     } deriving (Show)
 
-newtype ParamGestureEvent = ParamGestureEvent
+data ParamGestureEvent = ParamGestureEvent
     { paramGestureEvent_paramId :: ClapId }
     deriving (Show)
 
@@ -182,16 +180,15 @@ data Midi2Event = Midi2Event
     , midi2Event_data :: (Word32, Word32, Word32, Word32)
     } deriving (Show)
 
-newtype InputEventsHandle = InputEventsHandle { unInputEventsHandle :: Ptr C'clap_input_events }
-    deriving (Show)
+type InputEventsHandle = Ptr C'clap_input_events
 
 size :: InputEventsHandle -> IO Int32
-size (InputEventsHandle inputEvents) = do
+size inputEvents = do
     funPtr <- peek $ p'clap_input_events'size inputEvents
     pure $ fromIntegral $ mK'size funPtr inputEvents
 
 get :: InputEventsHandle -> Int32 -> IO Event
-get (InputEventsHandle inputEvents) index = do
+get inputEvents index = do
     funPtr <- peek $ p'clap_input_events'get inputEvents
     let cEvent = mK'get funPtr inputEvents (fromIntegral index)
     fromStruct cEvent
@@ -337,12 +334,10 @@ get (InputEventsHandle inputEvents) index = do
                 }
 
 
-
-newtype OutputEventsHandle = OutputEventsHandle { unOutputEventsHandle :: Ptr C'clap_output_events }
-    deriving (Show)
+type OutputEventsHandle = Ptr C'clap_output_events
 
 tryPush :: OutputEventsHandle -> EventConfig -> Event -> IO Bool
-tryPush (OutputEventsHandle outputEvents) eventConfig event = do
+tryPush outputEvents eventConfig event = do
     funPtr <- peek $ p'clap_output_events'try_push outputEvents
     cEvent <- toStruct event
     pure $ toBool $ mK'try_push funPtr outputEvents cEvent

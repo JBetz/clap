@@ -14,16 +14,15 @@ import Foreign.Storable
 clapPluginFactoryId :: String
 clapPluginFactoryId = "clap.plugin-factory"
 
-newtype PluginFactoryHandle = PluginFactoryHandle { unPluginFactory :: Ptr C'clap_plugin_factory }
-    deriving (Show)
+type PluginFactoryHandle = Ptr C'clap_plugin_factory
 
 getPluginCount :: PluginFactoryHandle -> IO Int
-getPluginCount (PluginFactoryHandle pluginFactory) = do
+getPluginCount pluginFactory = do
     getPluginCountPtr <- peek $ p'clap_plugin_factory'get_plugin_count pluginFactory
     pure $ fromIntegral $ mK'get_plugin_count getPluginCountPtr pluginFactory
 
 getPluginDescriptor :: PluginFactoryHandle -> Int -> IO (Maybe PluginDescriptor)
-getPluginDescriptor (PluginFactoryHandle pluginFactory) index = do
+getPluginDescriptor pluginFactory index = do
     getPluginDescriptorPtr <- peek $ p'clap_plugin_factory'get_plugin_descriptor pluginFactory
     let descriptor = mK'get_plugin_descriptor getPluginDescriptorPtr pluginFactory (fromIntegral index) 
     if descriptor /= nullPtr
@@ -34,8 +33,8 @@ getPluginDescriptor (PluginFactoryHandle pluginFactory) index = do
         else pure Nothing
 
 createPlugin :: PluginFactoryHandle -> HostHandle -> String -> IO (Maybe PluginHandle)
-createPlugin (PluginFactoryHandle pluginFactory) (HostHandle host) pluginId = do
+createPlugin pluginFactory host pluginId = do
     createPluginPtr <- peek $ p'clap_plugin_factory'create_plugin pluginFactory
     withCString pluginId $ \cPluginId -> do 
         let plugin = mK'create_plugin createPluginPtr pluginFactory host cPluginId
-        pure $ pureIf (plugin /= nullPtr) (PluginHandle plugin)
+        pure $ pureIf (plugin /= nullPtr) plugin
