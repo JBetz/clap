@@ -1,0 +1,7 @@
+#include <bindings.cmacros.h>
+#include <clap/ext/gui.h>
+
+BC_GLOBALARRAY(CLAP_WINDOW_API_WIN32, char)
+BC_GLOBALARRAY(CLAP_WINDOW_API_COCOA, char)
+BC_GLOBALARRAY(CLAP_WINDOW_API_X11, char)
+BC_GLOBALARRAY(CLAP_WINDOW_API_WAYLAND, char)
