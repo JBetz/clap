@@ -7,7 +7,6 @@ import Data.Word
 import Foreign.Marshal.Utils
 import Foreign.Ptr
 import Foreign.Storable
-import System.Posix
 
 data ClapVersion = ClapVersion
     { clapVersion_major :: Word32

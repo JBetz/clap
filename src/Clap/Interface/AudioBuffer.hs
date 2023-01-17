@@ -16,6 +16,15 @@ data BufferData t where
     Data32 :: Ptr (Ptr CFloat) -> BufferData CFloat
     Data64 :: Ptr (Ptr CDouble) -> BufferData CDouble
 
+createAudioBuffer :: IO AudioBufferHandle
+createAudioBuffer = new $ C'clap_audio_buffer
+    { c'clap_audio_buffer'data32 = nullPtr
+    , c'clap_audio_buffer'data64 = nullPtr
+    , c'clap_audio_buffer'channel_count = 0
+    , c'clap_audio_buffer'latency = 0
+    , c'clap_audio_buffer'constant_mask = 0
+    }
+
 setBufferData :: AudioBufferHandle -> BufferData t -> IO () 
 setBufferData audioBuffer bufferData =
     case bufferData of

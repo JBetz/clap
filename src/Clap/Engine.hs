@@ -56,6 +56,7 @@ createEngine hostConfig = do
 
 start :: Engine -> IO (Maybe Error)
 start engine = do
+    initialize
     eitherStream <- openDefaultStream 2 0 (engine_sampleRate engine) (Just $ fromIntegral $ engine_numberOfFrames engine) (Just $ audioCallback engine) Nothing
     case eitherStream of
         Left portAudioError -> 
@@ -92,7 +93,8 @@ stop engine = do
         Just stream -> do
             stopStream stream
             closeStream stream
-        Nothing -> pure Nothing
+            terminate
+        Nothing -> pure Nothing 
 
 loadPlugin :: Engine -> PluginId -> IO ()
 loadPlugin engine =

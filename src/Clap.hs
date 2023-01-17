@@ -6,7 +6,8 @@ module Clap
     , ClapVersion (..)
     , hostClapVersion
     , scanForPlugins
-    , linuxPaths
+    , pluginLibraryPaths
+    , main
     ) where
 
 import Clap.Engine as Engine
@@ -19,16 +20,18 @@ import Clap.Interface.Plugin as Plugin
 import Clap.Interface.PluginFactory as PluginFactory
 import Clap.Interface.Version as Version
 import Clap.Interface.Foreign
+import Clap.Library
 import Control.Monad
 import Control.Monad.Extra
 import Data.Maybe
+import Foreign.Ptr
 import Foreign.Storable
 import System.Directory
-import System.Posix.DynamicLinker
+import System.FilePath
 
 scanForPlugins :: IO [FilePath]
 scanForPlugins = do
-    paths <- linuxPaths
+    paths <- pluginLibraryPaths
     scanForPluginsIn paths
 
 scanForPluginsIn :: [FilePath] -> IO [FilePath]
@@ -38,19 +41,10 @@ scanForPluginsIn directories = do
         if exists 
             then do
                 paths <- listDirectory directory
-                pure $ (\path -> directory <> "/" <> path) <$> paths
+                pure $ (\path -> directory </> path) <$> paths
             else pure []
         ) directories
     pure $ join paths
-
-linuxPaths :: IO [FilePath]
-linuxPaths = do
-    appUserDataDirectory <- getAppUserDataDirectory "clap"
-    pure [appUserDataDirectory, "/usr/lib/clap"]
-
--- TODO
-windowsPaths :: IO [FilePath]
-windowsPaths = pure [ "%COMMONPROGRAMFILES%/CLAP/", "%LOCALAPPDATA%/Programs/Common/CLAP/" ]
     
 data Plugin = Plugin
     { plugin_handle :: PluginHandle

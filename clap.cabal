@@ -8,6 +8,7 @@ library
                       Clap.Engine,
                       Clap.Extension,
                       Clap.Host,
+                      Clap.Library,
 
                       Clap.Interface.AudioBuffer,
                       Clap.Interface.Color,
@@ -66,14 +67,23 @@ library
                       containers,
                       directory,
                       extra,
-                      portaudio,
-                      unix
+                      filepath,
+                      portaudio
+    if os(windows)
+        other-modules: Clap.Library.Windows
+        build-depends: Win32
+        cpp-options:   -DWINDOWS
+    else
+        other-modules: Clap.Library.POSIX
+        build-depends: unix
     build-tool-depends: hsc2hs:hsc2hs
     hs-source-dirs:   src
     default-language: Haskell2010
     include-dirs:     clap/include,
                       cbits
     c-sources:        cbits/helper.c
+    extra-libraries:  portaudio
+    extra-lib-dirs:   C:\\ghcup\\msys64\\mingw64\\bin
 
 executable clap-exe
     main-is:          Main.hs

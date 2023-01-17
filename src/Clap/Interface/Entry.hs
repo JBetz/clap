@@ -10,14 +10,8 @@ import Foreign.Marshal.Alloc
 import Foreign.Marshal.Utils
 import Foreign.Ptr
 import Foreign.Storable
-import System.Posix.DynamicLinker
 
 type PluginEntryHandle = Ptr C'clap_plugin_entry
-
-clapEntry :: PluginLibrary -> IO PluginEntryHandle
-clapEntry (PluginLibrary dl) = do
-    clapEntryFunPtr <- dlsym dl "clap_entry"
-    pure $ castFunPtrToPtr clapEntryFunPtr
 
 init :: PluginEntryHandle -> FilePath -> IO Bool
 init pluginEntry filePath = do

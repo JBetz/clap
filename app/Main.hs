@@ -23,7 +23,7 @@ main = do
   print plugins
   let pluginId = ("plugins/clap-saw-demo.clap", 0)
   loadPlugin engine pluginId
-  result <- start engine
+  startResult <- start engine
   print startResult
   stopResult <- stop engine
   print stopResult

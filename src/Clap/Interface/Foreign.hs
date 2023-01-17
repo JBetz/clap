@@ -9,7 +9,6 @@ import Foreign.C
 import Foreign.Marshal.Alloc
 import Foreign.Marshal.Utils
 import Foreign.Ptr
-import System.Posix.DynamicLinker
 
 fromCInt :: CInt -> Int
 fromCInt = fromIntegral
@@ -38,6 +37,3 @@ flagsToInt flags = foldl1 (.|.) $ (\flag -> 1 `shiftL` fromEnum flag ) <$> flags
 intToFlags :: (Enum a, Bounded a) => Word32 -> [a]
 intToFlags int = 
     catMaybes $ (\flag -> if testBit int (fromEnum flag) then Just flag else Nothing) <$> [minBound .. maxBound]
-
-newtype PluginLibrary = PluginLibrary { unPluginLibrary :: DL }
-    deriving (Show)

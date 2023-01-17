@@ -10,6 +10,7 @@ import Clap.Interface.Host as Host
 import Clap.Interface.Foreign
 import Clap.Interface.Process
 import Clap.Interface.Version
+import Clap.Library
 import Control.Exception
 import Control.Monad
 import Control.Monad.Extra
@@ -19,8 +20,9 @@ import Data.Word
 import Data.IORef
 import Data.Map (Map)
 import qualified Data.Map as Map
+import Foreign.Marshal.Utils
 import Foreign.Ptr
-import System.Posix.DynamicLinker
+import Foreign.Storable
 
 data ThreadType 
     = MainThread
@@ -69,15 +71,15 @@ createPluginHost hostConfig = do
     plugins <- newIORef mempty
     threadType <- newIORef Unknown
     process <- newIORef Nothing
-    audioIn <- newIORef nullPtr
-    audioOut <- newIORef nullPtr
+    audioIn <- createAudioBuffer
+    audioOut <- createAudioBuffer
     pure $ PluginHost
         { pluginHost_handle = hostHandle 
         , pluginHost_plugins = plugins
         , pluginHost_threadType = threadType
         , pluginHost_process = nullPtr
-        , pluginHost_audioIn = nullPtr
-        , pluginHost_audioOut = nullPtr
+        , pluginHost_audioIn = audioIn
+        , pluginHost_audioOut = audioOut
         , pluginHost_inputEvents = undefined
         , pluginHost_outputEvents = undefined
         }
@@ -86,7 +88,7 @@ load :: PluginHost -> PluginId -> IO ()
 load host (filePath, index) = do
     let hostHandle = pluginHost_handle host 
     withPluginLibrary filePath $ \library -> do
-        entry <- clapEntry library
+        entry <- lookupPluginEntry library
         isEntryInitialized <- Entry.init entry filePath
         unless isEntryInitialized $ throw EntryInitializationFailed
         maybeFactory <- getFactory entry pluginFactoryId
@@ -182,7 +184,7 @@ setPorts host inputs outputs = do
     setBufferData audioIn inputs
     setConstantMask audioIn 0
     setLatency audioIn 0
-
+    
     let audioOut = pluginHost_audioOut host
     setChannelCount audioOut 0
     setBufferData audioOut outputs
@@ -195,7 +197,3 @@ getPlugin host pluginId = do
     case Map.lookup pluginId plugins of
         Nothing -> throw InvalidPluginId
         Just plugin -> pure plugin
-
-withPluginLibrary :: FilePath -> (PluginLibrary -> IO a) -> IO a
-withPluginLibrary filePath f = 
-    withDL filePath [RTLD_NOW] (f . PluginLibrary)
