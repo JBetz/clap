@@ -5,7 +5,10 @@ extra-source-files: CHANGELOG.md
 
 library
     exposed-modules:  Clap,
+                      Clap.Engine,
                       Clap.Extension,
+                      Clap.Host,
+
                       Clap.Interface.AudioBuffer,
                       Clap.Interface.Color,
                       Clap.Interface.Entry,
@@ -63,6 +66,7 @@ library
                       containers,
                       directory,
                       extra,
+                      portaudio,
                       unix
     build-tool-depends: hsc2hs:hsc2hs
     hs-source-dirs:   src

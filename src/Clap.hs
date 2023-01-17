@@ -1,18 +1,20 @@
 module Clap 
-    ( module Entry
+    ( module Engine
+    , module Extension
     , module Host
-    -- , module Plugin
-    , module PluginFactory
-    , module Version
+    , HostConfig (..)
+    , ClapVersion (..)
+    , hostClapVersion
     , scanForPlugins
     , linuxPaths
-    , loadPlugin 
     ) where
 
-import Clap.Extension
+import Clap.Engine as Engine
+import Clap.Extension as Extension
+import Clap.Host as Host
 import qualified Clap.Interface.Extension.Gui as Gui
 import Clap.Interface.Entry as Entry
-import Clap.Interface.Host as Host
+import Clap.Interface.Host (HostConfig (..))
 import Clap.Interface.Plugin as Plugin
 import Clap.Interface.PluginFactory as PluginFactory
 import Clap.Interface.Version as Version
@@ -49,35 +51,6 @@ linuxPaths = do
 -- TODO
 windowsPaths :: IO [FilePath]
 windowsPaths = pure [ "%COMMONPROGRAMFILES%/CLAP/", "%LOCALAPPDATA%/Programs/Common/CLAP/" ]
-
-loadPlugin :: HostHandle -> FilePath -> Int -> IO ()
-loadPlugin host filePath pluginIndex =
-    withPluginLibrary filePath $ \library -> do
-        print library
-        entry <- clapEntry library
-        isInitialized <- Entry.init entry filePath
-        when isInitialized $ do 
-            maybeFactory <- getFactory entry clapPluginFactoryId
-            whenJust maybeFactory $ \factory -> do 
-                print factory
-                count <- getPluginCount factory
-                print count
-                maybeDescriptor <- getPluginDescriptor factory pluginIndex
-                whenJust maybeDescriptor $ \descriptor -> do
-                    print descriptor
-                    maybePlugin <- createPlugin factory host (pluginDescriptor_id descriptor) 
-                    whenJust maybePlugin $ \plugin -> do 
-                        print plugin
-                        result <- Plugin.init plugin
-                        print result
-                        extensions <- initializeExtensions plugin
-                        case extensions_gui extensions of
-                            Just gui -> do
-                                result <- Gui.isApiSupported gui plugin Gui.X11 True
-                                putStrLn $ "isApiSupported: " <> show result
-                            Nothing -> pure ()
-                        Plugin.destroy plugin
-            Entry.deinit entry
     
 data Plugin = Plugin
     { plugin_handle :: PluginHandle

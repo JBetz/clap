@@ -24,8 +24,8 @@ initializeExtensions plugin = Extensions
         initializeExtension id =
             fmap castPtr <$> Plugin.getExtension plugin id 
 
-getExtension :: Extensions -> String -> Ptr ()
-getExtension extensions name = if
+getExtension :: Extensions -> String -> IO (Ptr ())
+getExtension extensions name = pure $ if
     | name == Gui.extensionId -> extract extensions_gui
     | name == Log.extensionId -> extract extensions_log
     | name == Render.extensionId -> extract extensions_render

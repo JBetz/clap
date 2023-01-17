@@ -23,8 +23,7 @@ in
       pkgs.pcre
       pkgs.gtkmm3
       pkgs.sqlite
-      # pkgs.alsa-lib
-      # pkgs.alsa-oss
+      pkgs.portaudio
 
       pkgs.haskellPackages.c2hsc
       pkgs.ghcid

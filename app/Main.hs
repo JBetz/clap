@@ -7,9 +7,9 @@ import Foreign.Ptr
 
 main :: IO ()
 main = do 
-  host <- createHost $ HostConfig
-    { hostConfig_clapVersion = clapVersion
-    , hostConfig_data = ()
+  engine <- createEngine $ HostConfig
+    { hostConfig_clapVersion = hostClapVersion
+    , hostConfig_data = nullPtr
     , hostConfig_name = "clap demo host"
     , hostConfig_vendor = "JBetz"
     , hostConfig_url = "github.com/JBetz/clap-hs"
@@ -21,4 +21,10 @@ main = do
     }
   plugins <- scanForPlugins
   print plugins
-  loadPlugin host "plugins/clap-saw-demo.clap" 0
+  let pluginId = ("plugins/clap-saw-demo.clap", 0)
+  loadPlugin engine pluginId
+  result <- start engine
+  print startResult
+  stopResult <- stop engine
+  print stopResult
+  pure ()

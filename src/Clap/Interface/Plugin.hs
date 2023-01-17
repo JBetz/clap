@@ -4,6 +4,7 @@ import Clap.Interface.Foreign.Plugin
 import Clap.Interface.PluginFeatures
 import Clap.Interface.Process
 import Clap.Interface.Version
+import Data.Int
 import Data.Map
 import Foreign.C.String
 import Foreign.C.Types
@@ -63,39 +64,39 @@ destroy plugin = do
     funPtr <- peek $ p'clap_plugin'destroy plugin
     mK'destroy funPtr plugin
 
-activate :: PluginHandle -> Double -> Int -> Int -> IO Bool
+activate :: PluginHandle -> Double -> Int32 -> Int32 -> IO Bool
 activate plugin sampleRate minFramesCount maxFramesCount = do
     funPtr <- peek $ p'clap_plugin'activate plugin
     pure $ toBool $ mK'activate funPtr plugin  (CDouble sampleRate) (fromIntegral minFramesCount) (fromIntegral maxFramesCount)
 
 deactivate :: PluginHandle -> IO ()
 deactivate plugin = do
-    funPtr <- peek (p'clap_plugin'deactivate plugin)
+    funPtr <- peek $ p'clap_plugin'deactivate plugin
     mK'deactivate funPtr plugin
 
 startProcessing :: PluginHandle -> IO Bool
 startProcessing plugin = do
-    funPtr <- peek (p'clap_plugin'start_processing plugin)
+    funPtr <- peek $ p'clap_plugin'start_processing plugin
     pure $ toBool (mK'start_processing funPtr plugin)
 
 stopProcessing :: PluginHandle -> IO ()
 stopProcessing plugin = do
-    funPtr <- peek (p'clap_plugin'stop_processing plugin)
+    funPtr <- peek $ p'clap_plugin'stop_processing plugin
     mK'stop_processing funPtr plugin
 
 reset :: PluginHandle -> IO ()
 reset plugin = do
-    funPtr <- peek (p'clap_plugin'reset plugin)
+    funPtr <- peek $ p'clap_plugin'reset plugin
     mK'reset funPtr plugin
 
 process :: PluginHandle -> ProcessHandle -> IO ProcessStatus
 process plugin process = do
-    funPtr <- peek (p'clap_plugin'process plugin)
+    funPtr <- peek $ p'clap_plugin'process plugin
     pure $ toEnum $ fromIntegral $ mK'process funPtr plugin process
 
 getExtension :: PluginHandle -> String -> IO (Maybe (Ptr ()))
 getExtension plugin name = do
-    funPtr <- peek (p'clap_plugin'get_extension plugin)
+    funPtr <- peek $ p'clap_plugin'get_extension plugin
     withCString name $ \cName -> do
         let extension = mK'get_extension funPtr plugin cName
         pure $ if extension == nullPtr
@@ -104,5 +105,5 @@ getExtension plugin name = do
 
 onMainThread :: PluginHandle -> IO ()
 onMainThread plugin = do
-    funPtr <- peek (p'clap_plugin'on_main_thread plugin)
+    funPtr <- peek $ p'clap_plugin'on_main_thread plugin
     mK'on_main_thread funPtr plugin

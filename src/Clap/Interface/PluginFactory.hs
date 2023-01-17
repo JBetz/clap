@@ -11,8 +11,8 @@ import Foreign.Marshal.Array
 import Foreign.Ptr
 import Foreign.Storable
 
-clapPluginFactoryId :: String
-clapPluginFactoryId = "clap.plugin-factory"
+pluginFactoryId :: String
+pluginFactoryId = "clap.plugin-factory"
 
 type PluginFactoryHandle = Ptr C'clap_plugin_factory
 
