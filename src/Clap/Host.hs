@@ -6,8 +6,11 @@ import Clap.Interface.Entry as Entry
 import Clap.Interface.Plugin as Plugin
 import Clap.Interface.Events
 import Clap.Interface.PluginFactory
+import Clap.Interface.Process
 import Clap.Interface.Host as Host
 import Clap.Interface.Foreign
+import Clap.Interface.Foreign.Plugin
+import Clap.Interface.Foreign.Process
 import Clap.Interface.Process
 import Clap.Interface.Version
 import Clap.Library
@@ -29,6 +32,7 @@ data ThreadType
     = MainThread
     | AudioThread
     | Unknown
+    deriving (Show)
 
 data PluginHost = PluginHost
     { pluginHost_handle :: HostHandle
@@ -98,39 +102,40 @@ load host (filePath, index) = do
         unless isEntryInitialized $ throw EntryInitializationFailed
         maybeFactory <- getFactory entry pluginFactoryId
         whenJust maybeFactory $ \factory -> do
-                count <- getPluginCount factory
-                when (index > count) $ throw InvalidIndex
-                maybeDescriptor <- getPluginDescriptor factory index
-                case maybeDescriptor of
-                    Nothing -> throw NoDescriptor
-                    Just descriptor -> do
-                        unless (clapVersionIsCompatible $ pluginDescriptor_clapVersion descriptor) $ throw IncompatibleClapVersion
-                        let hostHandle = pluginHost_handle host
-                        count <- getPluginCount factory
-                        maybePluginInstanceHandle <- createPlugin factory hostHandle (pluginDescriptor_id descriptor) 
-                        case maybePluginInstanceHandle of
-                            Nothing -> throw CreationFailed
-                            Just pluginInstanceHandle -> do 
-                                isPluginInitialized <- Plugin.init pluginInstanceHandle
-                                unless isPluginInitialized $ throw PluginInitializationFailed
-                                addPlugin host (filePath, index) $ Plugin
-                                    { plugin_library = library
-                                    , plugin_entry = entry
-                                    , plugin_factory = factory
-                                    , plugin_descriptor = descriptor
-                                    , plugin_handle = pluginInstanceHandle
-                                    }
+            count <- getPluginCount factory
+            when (index > count) $ throw InvalidIndex
+            maybeDescriptor <- getPluginDescriptor factory index
+            case maybeDescriptor of
+                Nothing -> throw NoDescriptor
+                Just descriptor -> do
+                    unless (clapVersionIsCompatible $ pluginDescriptor_clapVersion descriptor) $ throw IncompatibleClapVersion
+                    let hostHandle = pluginHost_handle host
+                    count <- getPluginCount factory
+                    maybePluginHandle <- createPlugin factory hostHandle (pluginDescriptor_id descriptor) 
+                    case maybePluginHandle of
+                        Nothing -> throw CreationFailed
+                        Just pluginHandle -> do 
+                            isPluginInitialized <- Plugin.init pluginHandle
+                            unless isPluginInitialized $ throw PluginInitializationFailed
+                            let stablePluginHandle = castPtrToStablePtr $ castPtr pluginHandle
+                            addPlugin host (filePath, index) $ Plugin
+                                { plugin_library = library
+                                , plugin_entry = entry
+                                , plugin_factory = factory
+                                , plugin_descriptor = descriptor
+                                , plugin_handle = stablePluginHandle
+                                }
     where        
         addPlugin :: PluginHost -> PluginId -> Plugin -> IO ()
         addPlugin host key plugin =
             modifyIORef (pluginHost_plugins host) $ Map.insert key plugin
 
-activate :: PluginHost -> PluginId -> Double -> Int32 -> IO Bool
+activate :: PluginHost -> PluginId -> Double -> Word32 -> IO Bool
 activate host pluginId sampleRate blockSize = do
     plugin <- getPlugin host pluginId
     Plugin.activate (plugin_handle plugin) sampleRate blockSize blockSize
 
-activateAll :: PluginHost -> Double -> Int32 -> IO ()
+activateAll :: PluginHost -> Double -> Word32 -> IO ()
 activateAll host sampleRate blockSize = do
     plugins <- readIORef (pluginHost_plugins host) 
     for_ (Map.elems plugins) $ \plugin ->
@@ -172,7 +177,8 @@ process host = do
     plugins <- readIORef $ pluginHost_plugins host
     for_ (Map.elems plugins) $ \plugin -> do
         startProcessing (plugin_handle plugin)
-        Plugin.process (plugin_handle plugin) process
+        processStatus <- Plugin.process (plugin_handle plugin) process
+        print processStatus
 
 
 processEnd :: HasCallStack => PluginHost -> Word64 -> Int64 -> IO ()

@@ -18,7 +18,7 @@ data ProcessStatus
     | ContinueIfNotQuiet
     | Tail 
     | Sleep
-    deriving (Enum)
+    deriving (Show, Enum)
 
 createProcess :: IO ProcessHandle 
 createProcess = new $ C'clap_process 

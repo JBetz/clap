@@ -13,6 +13,7 @@ import Data.IORef
 import Data.Int
 import Data.List
 import qualified Data.Map as Map
+import Data.Word
 import Foreign.C.Types
 import Foreign.Marshal.Alloc
 import Foreign.Marshal.Array
@@ -27,7 +28,7 @@ data Engine = Engine
     , engine_pluginHost :: PluginHost
     , engine_steadyTime :: Int64
     , engine_sampleRate :: Double
-    , engine_numberOfFrames :: Int32
+    , engine_numberOfFrames :: Word32
     , engine_inputs :: Ptr (Ptr CFloat)
     , engine_outputs :: Ptr (Ptr CFloat)
     , engine_audioStream :: IORef (Maybe (Stream CFloat CFloat))
@@ -99,7 +100,6 @@ audioCallback engine timeInfo flags numberOfInputSamples inputPtr outputPtr = do
         [leftOutputBuffer, rightOutputBuffer] <- peekArray 2 $ engine_outputs engine
         leftOutputs <- peekArray (fromIntegral numberOfInputSamples) leftOutputBuffer
         rightOutputs <- peekArray (fromIntegral numberOfInputSamples) rightOutputBuffer
-        -- print (filter (> 0) leftOutputs, filter (> 0) rightOutputs)
         let output = interleave leftOutputs rightOutputs
         pokeArray outputPtr output
 

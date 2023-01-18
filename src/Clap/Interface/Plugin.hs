@@ -6,6 +6,7 @@ import Clap.Interface.Process
 import Clap.Interface.Version
 import Data.Int
 import Data.Map
+import Data.Word
 import Foreign.C.String
 import Foreign.C.Types
 import Foreign.Marshal.Array
@@ -64,7 +65,7 @@ destroy plugin = do
     funPtr <- peek $ p'clap_plugin'destroy plugin
     mK'destroy funPtr plugin
 
-activate :: PluginHandle -> Double -> Int32 -> Int32 -> IO Bool
+activate :: PluginHandle -> Double -> Word32 -> Word32 -> IO Bool
 activate plugin sampleRate minFramesCount maxFramesCount = do
     funPtr <- peek $ p'clap_plugin'activate plugin
     pure $ toBool $ mK'activate funPtr plugin  (CDouble sampleRate) (fromIntegral minFramesCount) (fromIntegral maxFramesCount)
