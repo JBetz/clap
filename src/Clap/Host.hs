@@ -117,13 +117,12 @@ load host (filePath, index) = do
                         Just pluginHandle -> do 
                             isPluginInitialized <- Plugin.init pluginHandle
                             unless isPluginInitialized $ throw PluginInitializationFailed
-                            let stablePluginHandle = castPtrToStablePtr $ castPtr pluginHandle
                             addPlugin host (filePath, index) $ Plugin
                                 { plugin_library = library
                                 , plugin_entry = entry
                                 , plugin_factory = factory
                                 , plugin_descriptor = descriptor
-                                , plugin_handle = stablePluginHandle
+                                , plugin_handle = pluginHandle
                                 }
     where        
         addPlugin :: PluginHost -> PluginId -> Plugin -> IO ()
