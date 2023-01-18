@@ -5,10 +5,8 @@ module Clap.Interface.Host where
 import Clap.Interface.Foreign.Host
 import Clap.Interface.Version
 import Foreign.C.String
-import Foreign.Marshal.Alloc
 import Foreign.Marshal.Utils
 import Foreign.Ptr
-import Foreign.Storable
 
 type HostHandle = Ptr C'clap_host
 
@@ -23,6 +21,20 @@ data HostConfig = HostConfig
     , hostConfig_requestRestart :: HostHandle -> IO ()
     , hostConfig_requestProcess :: HostHandle -> IO ()
     , hostConfig_requestCallback :: HostHandle -> IO ()
+    }
+
+defaultHostConfig :: HostConfig
+defaultHostConfig = HostConfig
+    { hostConfig_clapVersion = hostClapVersion
+    , hostConfig_data = nullPtr
+    , hostConfig_name = "CLAP demo host"
+    , hostConfig_vendor = "unknown"
+    , hostConfig_url = "github.com/JBetz/clap-hs"
+    , hostConfig_version = "0.1"
+    , hostConfig_getExtension = \_h _s -> pure nullPtr
+    , hostConfig_requestRestart = \_h -> pure ()
+    , hostConfig_requestProcess = \_h -> pure ()
+    , hostConfig_requestCallback = \_h -> pure ()
     }
 
 createHost :: HostConfig -> IO HostHandle

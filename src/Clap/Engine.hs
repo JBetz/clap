@@ -1,24 +1,19 @@
 module Clap.Engine where
 
-import Clap.Extension
 import Clap.Interface.AudioBuffer
 import Clap.Interface.Events
 import Clap.Interface.Host
-import Clap.Interface.Process
 import Clap.Host as Host
-import Control.Exception
 import Control.Monad
 import Data.Foldable (for_)
 import Data.IORef
 import Data.Int
 import Data.List
-import qualified Data.Map as Map
 import Data.Word
 import Foreign.C.Types
 import Foreign.Marshal.Alloc
 import Foreign.Marshal.Array
 import Foreign.Ptr
-import Foreign.Storable
 import GHC.Stack
 import Sound.PortAudio as PortAudio
 import Sound.PortAudio.Base
@@ -66,25 +61,27 @@ pushEvent engine eventConfig event =
 
 start :: Engine -> IO (Maybe Error)
 start engine = do
-    initialize
-    allocateBuffers engine (32 * 1024)
-    eitherStream <- openDefaultStream 2 2 (engine_sampleRate engine) (Just $ fromIntegral $ engine_numberOfFrames engine) (Just $ audioCallback engine) Nothing
-    case eitherStream of
-        Left portAudioError -> 
-            pure $ Just portAudioError
-        Right stream -> do
-            writeIORef (engine_audioStream engine) (Just stream)
-            let pluginHost = engine_pluginHost engine
-            setPorts pluginHost (Data32 $ engine_inputs engine) (Data32 $ engine_outputs engine)
-            activateAll pluginHost (engine_sampleRate engine) (engine_numberOfFrames engine)
-            startStream stream
-            pure Nothing
-
+    initializeResult <- initialize
+    case initializeResult of
+        Just initializeError -> pure $ Just initializeError
+        Nothing -> do
+            allocateBuffers engine (32 * 1024)
+            eitherStream <- openDefaultStream 2 2 (engine_sampleRate engine) (Just $ fromIntegral $ engine_numberOfFrames engine) (Just $ audioCallback engine) Nothing
+            case eitherStream of
+                Left portAudioError -> 
+                    pure $ Just portAudioError
+                Right stream -> do
+                    writeIORef (engine_audioStream engine) (Just stream)
+                    let pluginHost = engine_pluginHost engine
+                    setPorts pluginHost (Data32 $ engine_inputs engine) (Data32 $ engine_outputs engine)
+                    activateAll pluginHost (engine_sampleRate engine) (engine_numberOfFrames engine)
+                    startStream stream
+            
 audioCallback :: HasCallStack => Engine -> PaStreamCallbackTimeInfo -> [StreamCallbackFlag] -> CULong -> Ptr CFloat -> Ptr CFloat -> IO StreamResult
-audioCallback engine timeInfo flags numberOfInputSamples inputPtr outputPtr = do
+audioCallback engine _timeInfo _flags numberOfInputSamples inputPtr outputPtr = do
     let host = engine_pluginHost engine
     input <- peekArray (fromIntegral $ numberOfInputSamples * 2) inputPtr
-    let (leftInput, rightInput) = partition (\(i, _) -> even (i * 2)) (zip [0 ..] input)
+    let (leftInput, rightInput) = partition (\(i, _) -> even (i * 2)) (zip [0 :: Int ..] input)
     [leftInputBuffer, rightInputBuffer] <- peekArray 2 $ engine_inputs engine
     pokeArray leftInputBuffer (snd <$> leftInput)
     pokeArray rightInputBuffer (snd <$> rightInput)    
@@ -111,8 +108,8 @@ stop engine = do
     case maybeStream of
         Just stream -> do
             deactivateAll (engine_pluginHost engine)
-            stopStream stream
-            closeStream stream
+            _ <- stopStream stream
+            _ <- closeStream stream
             freeBuffers engine
             terminate
         Nothing -> pure Nothing 

@@ -3,11 +3,8 @@ module Clap.Interface.PluginFactory where
 import Clap.Interface.Host
 import Clap.Interface.Plugin
 import Clap.Interface.Foreign
-import Clap.Interface.Foreign.Plugin
 import Clap.Interface.Foreign.PluginFactory
-import Data.Int
 import Foreign.C.String
-import Foreign.Marshal.Array
 import Foreign.Ptr
 import Foreign.Storable
 
@@ -24,11 +21,11 @@ getPluginCount pluginFactory = do
 getPluginDescriptor :: PluginFactoryHandle -> Int -> IO (Maybe PluginDescriptor)
 getPluginDescriptor pluginFactory index = do
     getPluginDescriptorPtr <- peek $ p'clap_plugin_factory'get_plugin_descriptor pluginFactory
-    let descriptor = mK'get_plugin_descriptor getPluginDescriptorPtr pluginFactory (fromIntegral index) 
-    if descriptor /= nullPtr
+    let descriptorPtr = mK'get_plugin_descriptor getPluginDescriptorPtr pluginFactory (fromIntegral index) 
+    if descriptorPtr /= nullPtr
         then do 
-            descriptorPtr <- peek $ castPtr descriptor
-            descriptor <- Clap.Interface.Plugin.fromStruct descriptorPtr
+            cDescriptor <- peek $ castPtr descriptorPtr
+            descriptor <- Clap.Interface.Plugin.fromStruct cDescriptor
             pure $ Just descriptor
         else pure Nothing
 

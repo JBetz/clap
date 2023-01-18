@@ -4,7 +4,6 @@ import Clap.Interface.Extension.Foreign.State
 import Clap.Interface.Plugin
 import Clap.Interface.Host
 import Clap.Interface.Stream
-import Data.Word
 import Foreign.Marshal.Utils
 import Foreign.Ptr
 import Foreign.Storable

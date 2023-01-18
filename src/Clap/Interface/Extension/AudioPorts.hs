@@ -47,6 +47,7 @@ instance Read PortType where
             "surround" -> pure Surround
             "ambisonic" -> pure Ambisonic
             "cv" -> pure CV
+            _ -> pure Stereo
     readListPrec = readListPrecDefault
 
 

@@ -5,7 +5,6 @@ import Clap.Interface.Host
 import Foreign.C.String
 import Foreign.Marshal.Utils
 import Foreign.Ptr
-import Foreign.Storable
 
 extensionId :: String
 extensionId = "clap.log"
