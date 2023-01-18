@@ -155,10 +155,9 @@ processBegin host framesCount steadyTime = do
     setFramesCount process framesCount
     setSteadyTime process steadyTime
     
-processEvent :: HasCallStack => PluginHost -> EventConfig -> Event -> IO Bool
-processEvent host eventConfig event = do
-    cEvent <- createEvent eventConfig event
-    pure $ toBool $ tryPush (pluginHost_outputEvents host) cEvent
+processEvent :: HasCallStack => PluginHost -> EventConfig -> Event -> IO ()
+processEvent host eventConfig event =
+    push (pluginHost_inputEvents host) eventConfig event
 
 process :: HasCallStack => PluginHost -> IO ()
 process host = do

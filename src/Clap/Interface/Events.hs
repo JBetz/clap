@@ -187,25 +187,31 @@ type InputEventsHandle = Ptr C'clap_input_events
 
 createInputEvents :: IO InputEventsHandle
 createInputEvents = do
-    listPtr <- newArray ([] :: [Ptr C'clap_event_header])
+    listPtr <- newArray []
     sizePtr <- mk'size size
     getPtr <- mk'get get
     new $ C'clap_input_events
-        { c'clap_input_events'ctx = castPtr listPtr
+        { c'clap_input_events'ctx = listPtr
         , c'clap_input_events'size  = sizePtr
         , c'clap_input_events'get  = getPtr
         }
 
 size :: InputEventsHandle -> CUInt
 size inputEvents = unsafePerformIO $ do
-    funPtr <- peek $ p'clap_input_events'size inputEvents
-    pure $ fromIntegral $ mK'size funPtr inputEvents
+    length <- lengthArray0 nullPtr $ p'clap_input_events'ctx inputEvents
+    pure $ fromIntegral length
 
 get :: InputEventsHandle -> CUInt -> Ptr C'clap_event_header
 get inputEvents index = unsafePerformIO $ do
-    funPtr <- peek $ p'clap_input_events'get inputEvents
-    pure $ mK'get funPtr inputEvents (fromIntegral index)
-    
+    events <- peekArray0 nullPtr $ p'clap_input_events'ctx inputEvents
+    pure $ castPtr $ events !! fromIntegral index
+
+push :: InputEventsHandle -> EventConfig -> Event -> IO ()
+push inputEvents eventConfig event = do
+    events <- peekArray0 nullPtr $ p'clap_input_events'ctx inputEvents
+    newEvent <- createEvent eventConfig event
+    pokeArray (p'clap_input_events'ctx inputEvents) (events <> [castPtr newEvent])
+
 readEvent :: Ptr C'clap_event_header -> IO Event
 readEvent cEventHeader = do
     eventType <- peek $ p'clap_event_header'type cEventHeader
