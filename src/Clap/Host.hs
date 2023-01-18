@@ -8,10 +8,6 @@ import Clap.Interface.Events
 import Clap.Interface.PluginFactory
 import Clap.Interface.Process
 import Clap.Interface.Host as Host
-import Clap.Interface.Foreign
-import Clap.Interface.Foreign.Plugin
-import Clap.Interface.Foreign.Process
-import Clap.Interface.Process
 import Clap.Interface.Version
 import Clap.Library
 import Control.Exception
@@ -23,10 +19,7 @@ import Data.Word
 import Data.IORef
 import Data.Map (Map)
 import qualified Data.Map as Map
-import Foreign.Marshal.Utils
 import Foreign.Ptr
-import Foreign.Storable
-import GHC.Stack
 
 data ThreadType 
     = MainThread
@@ -76,7 +69,7 @@ createPluginHost hostConfig = do
     hostHandle <- Host.createHost $ hostConfig { hostConfig_getExtension = \_ name -> Clap.Extension.getExtension extensions name }
     plugins <- newIORef mempty
     threadType <- newIORef Unknown
-    process <- createProcess
+    process' <- createProcess
     audioIn <- createAudioBuffer
     audioOut <- createAudioBuffer
     inputEvents <- createInputEvents
@@ -85,7 +78,7 @@ createPluginHost hostConfig = do
         { pluginHost_handle = hostHandle 
         , pluginHost_plugins = plugins
         , pluginHost_threadType = threadType
-        , pluginHost_process = process
+        , pluginHost_process = process'
         , pluginHost_audioIn = audioIn
         , pluginHost_audioOut = audioOut
         , pluginHost_inputEvents = inputEvents
@@ -96,37 +89,35 @@ createPluginHost hostConfig = do
 load :: PluginHost -> PluginId -> IO ()
 load host (filePath, index) = do
     let hostHandle = pluginHost_handle host 
-    withPluginLibrary filePath $ \library -> do
-        entry <- lookupPluginEntry library
-        isEntryInitialized <- Entry.init entry filePath
-        unless isEntryInitialized $ throw EntryInitializationFailed
-        maybeFactory <- getFactory entry pluginFactoryId
-        whenJust maybeFactory $ \factory -> do
-            count <- getPluginCount factory
-            when (index > count) $ throw InvalidIndex
-            maybeDescriptor <- getPluginDescriptor factory index
-            case maybeDescriptor of
-                Nothing -> throw NoDescriptor
-                Just descriptor -> do
-                    unless (clapVersionIsCompatible $ pluginDescriptor_clapVersion descriptor) $ throw IncompatibleClapVersion
-                    let hostHandle = pluginHost_handle host
-                    count <- getPluginCount factory
-                    maybePluginHandle <- createPlugin factory hostHandle (pluginDescriptor_id descriptor) 
-                    case maybePluginHandle of
-                        Nothing -> throw CreationFailed
-                        Just pluginHandle -> do 
-                            isPluginInitialized <- Plugin.init pluginHandle
-                            unless isPluginInitialized $ throw PluginInitializationFailed
-                            addPlugin host (filePath, index) $ Plugin
-                                { plugin_library = library
-                                , plugin_entry = entry
-                                , plugin_factory = factory
-                                , plugin_descriptor = descriptor
-                                , plugin_handle = pluginHandle
-                                }
+    library <- openPluginLibrary filePath
+    entry <- lookupPluginEntry library
+    isEntryInitialized <- Entry.init entry filePath
+    unless isEntryInitialized $ throw EntryInitializationFailed
+    maybeFactory <- getFactory entry pluginFactoryId
+    whenJust maybeFactory $ \factory -> do
+        count <- getPluginCount factory
+        when (index > count) $ throw InvalidIndex
+        maybeDescriptor <- getPluginDescriptor factory index
+        case maybeDescriptor of
+            Nothing -> throw NoDescriptor
+            Just descriptor -> do
+                unless (clapVersionIsCompatible $ pluginDescriptor_clapVersion descriptor) $ throw IncompatibleClapVersion
+                maybePluginHandle <- createPlugin factory hostHandle (pluginDescriptor_id descriptor) 
+                case maybePluginHandle of
+                    Nothing -> throw CreationFailed
+                    Just pluginHandle -> do 
+                        isPluginInitialized <- Plugin.init pluginHandle
+                        unless isPluginInitialized $ throw PluginInitializationFailed
+                        addPlugin (filePath, index) $ Plugin
+                            { plugin_library = library
+                            , plugin_entry = entry
+                            , plugin_factory = factory
+                            , plugin_descriptor = descriptor
+                            , plugin_handle = pluginHandle
+                            }
     where        
-        addPlugin :: PluginHost -> PluginId -> Plugin -> IO ()
-        addPlugin host key plugin =
+        addPlugin :: PluginId -> Plugin -> IO ()
+        addPlugin key plugin =
             modifyIORef (pluginHost_plugins host) $ Map.insert key plugin
 
 activate :: PluginHost -> PluginId -> Double -> Word32 -> IO Bool
@@ -151,41 +142,39 @@ deactivateAll host = do
     for_ (Map.elems plugins) $ \plugin ->
         Plugin.deactivate (plugin_handle plugin)
 
-
-processBegin :: HasCallStack => PluginHost -> Word64 -> Int64 -> IO ()
+processBegin :: PluginHost -> Word64 -> Int64 -> IO ()
 processBegin host framesCount steadyTime = do
     setThreadType host AudioThread
-    let process = pluginHost_process host
-    setFramesCount process framesCount
-    setSteadyTime process steadyTime
+    let process' = pluginHost_process host
+    setFramesCount process' framesCount
+    setSteadyTime process' steadyTime
     
-processEvent :: HasCallStack => PluginHost -> EventConfig -> Event -> IO ()
+processEvent :: PluginHost -> EventConfig -> Event -> IO ()
 processEvent host eventConfig event =
     push (pluginHost_inputEvents host) eventConfig event
 
-process :: HasCallStack => PluginHost -> IO ()
+process :: PluginHost -> IO ()
 process host = do
-    let process = pluginHost_process host
-    setTransport process nullPtr
-    setInputEvents process (pluginHost_inputEvents host)
-    setOutputEvents process (pluginHost_outputEvents host)
-    setAudioInputs process (pluginHost_audioIn host)
-    setAudioInputsCount process 1
-    setAudioOutputs process (pluginHost_audioOut host)
-    setAudioOutputsCount process 1
+    let process' = pluginHost_process host
+    setTransport process' nullPtr
+    setInputEvents process' (pluginHost_inputEvents host)
+    setOutputEvents process' (pluginHost_outputEvents host)
+    setAudioInputs process' (pluginHost_audioIn host)
+    setAudioInputsCount process' 1
+    setAudioOutputs process' (pluginHost_audioOut host)
+    setAudioOutputsCount process' 1
     plugins <- readIORef $ pluginHost_plugins host
     for_ (Map.elems plugins) $ \plugin -> do
-        startProcessing (plugin_handle plugin)
-        processStatus <- Plugin.process (plugin_handle plugin) process
+        _ <- startProcessing (plugin_handle plugin)
+        processStatus <- Plugin.process (plugin_handle plugin) process'
         print processStatus
 
-
-processEnd :: HasCallStack => PluginHost -> Word64 -> Int64 -> IO ()
+processEnd :: PluginHost -> Word64 -> Int64 -> IO ()
 processEnd host numberOfFrames steadyTime = do
     setThreadType host Unknown
-    let process = pluginHost_process host
-    setFramesCount process numberOfFrames
-    setSteadyTime process steadyTime
+    let process' = pluginHost_process host
+    setFramesCount process' numberOfFrames
+    setSteadyTime process' steadyTime
 
 setThreadType :: PluginHost -> ThreadType -> IO ()
 setThreadType host =
