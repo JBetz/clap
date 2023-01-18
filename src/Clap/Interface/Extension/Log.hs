@@ -20,7 +20,7 @@ data LogLevel
     | LogFatal
     | LogHostMisbehaving
     | LogPluginMisbehaving
-    deriving (Enum)
+    deriving (Show, Enum)
 
 createHostLog :: (HostHandle -> LogLevel -> String -> IO ()) -> IO HostLogHandle
 createHostLog logCallback = do

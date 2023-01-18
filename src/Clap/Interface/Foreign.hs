@@ -32,7 +32,7 @@ pureIf :: (Alternative m) => Bool -> a -> m a
 pureIf b a = if b then pure a else empty
 
 flagsToInt :: Enum a => [a] -> Word32
-flagsToInt flags = foldl1 (.|.) $ (\flag -> 1 `shiftL` fromEnum flag ) <$> flags
+flagsToInt flags = foldl (.|.) 0 $ (\flag -> 1 `shiftL` fromEnum flag ) <$> flags
 
 intToFlags :: (Enum a, Bounded a) => Word32 -> [a]
 intToFlags int = 

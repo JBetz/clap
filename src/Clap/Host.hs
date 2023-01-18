@@ -23,6 +23,7 @@ import qualified Data.Map as Map
 import Foreign.Marshal.Utils
 import Foreign.Ptr
 import Foreign.Storable
+import GHC.Stack
 
 data ThreadType 
     = MainThread
@@ -38,6 +39,7 @@ data PluginHost = PluginHost
     , pluginHost_audioOut :: AudioBufferHandle
     , pluginHost_inputEvents :: InputEventsHandle
     , pluginHost_outputEvents :: OutputEventsHandle
+    , pluginHost_extensions :: HostExtensions
     }
 
 type PluginId = (FilePath, Int)
@@ -48,7 +50,6 @@ data Plugin = Plugin
     , plugin_factory :: PluginFactoryHandle
     , plugin_descriptor :: PluginDescriptor
     , plugin_handle :: PluginHandle
-    , plugin_extensions :: Extensions
     }
 
 data PluginException
@@ -67,21 +68,25 @@ instance Exception PluginException
 
 createPluginHost :: HostConfig -> IO PluginHost
 createPluginHost hostConfig = do
-    hostHandle <- Host.createHost hostConfig
+    extensions <- initializeExtensions
+    hostHandle <- Host.createHost $ hostConfig { hostConfig_getExtension = \_ name -> Clap.Extension.getExtension extensions name }
     plugins <- newIORef mempty
     threadType <- newIORef Unknown
-    process <- newIORef Nothing
+    process <- createProcess
     audioIn <- createAudioBuffer
     audioOut <- createAudioBuffer
+    inputEvents <- createInputEvents
+    outputEvents <- createOutputEvents
     pure $ PluginHost
         { pluginHost_handle = hostHandle 
         , pluginHost_plugins = plugins
         , pluginHost_threadType = threadType
-        , pluginHost_process = nullPtr
+        , pluginHost_process = process
         , pluginHost_audioIn = audioIn
         , pluginHost_audioOut = audioOut
-        , pluginHost_inputEvents = undefined
-        , pluginHost_outputEvents = undefined
+        , pluginHost_inputEvents = inputEvents
+        , pluginHost_outputEvents = outputEvents
+        , pluginHost_extensions = extensions
         }
 
 load :: PluginHost -> PluginId -> IO ()
@@ -108,14 +113,12 @@ load host (filePath, index) = do
                             Just pluginInstanceHandle -> do 
                                 isPluginInitialized <- Plugin.init pluginInstanceHandle
                                 unless isPluginInitialized $ throw PluginInitializationFailed
-                                extensions <- initializeExtensions pluginInstanceHandle               
                                 addPlugin host (filePath, index) $ Plugin
                                     { plugin_library = library
                                     , plugin_entry = entry
                                     , plugin_factory = factory
                                     , plugin_descriptor = descriptor
                                     , plugin_handle = pluginInstanceHandle
-                                    , plugin_extensions = extensions
                                     }
     where        
         addPlugin :: PluginHost -> PluginId -> Plugin -> IO ()
@@ -133,24 +136,31 @@ activateAll host sampleRate blockSize = do
     for_ (Map.elems plugins) $ \plugin ->
         Plugin.activate (plugin_handle plugin) sampleRate blockSize blockSize
 
-
 deactivate :: PluginHost -> PluginId -> IO ()
 deactivate host pluginId = do
     plugin <- getPlugin host pluginId
     Plugin.deactivate (plugin_handle plugin)
 
-processBegin :: PluginHost -> Word64 -> Int64 -> IO ()
+deactivateAll :: PluginHost -> IO ()
+deactivateAll host = do
+    plugins <- readIORef (pluginHost_plugins host) 
+    for_ (Map.elems plugins) $ \plugin ->
+        Plugin.deactivate (plugin_handle plugin)
+
+
+processBegin :: HasCallStack => PluginHost -> Word64 -> Int64 -> IO ()
 processBegin host framesCount steadyTime = do
     setThreadType host AudioThread
     let process = pluginHost_process host
     setFramesCount process framesCount
     setSteadyTime process steadyTime
     
-processEvent :: PluginHost -> EventConfig -> Event -> IO Bool
-processEvent host eventConfig event =
-    tryPush (pluginHost_outputEvents host) eventConfig event
+processEvent :: HasCallStack => PluginHost -> EventConfig -> Event -> IO Bool
+processEvent host eventConfig event = do
+    cEvent <- createEvent eventConfig event
+    pure $ toBool $ tryPush (pluginHost_outputEvents host) cEvent
 
-process :: PluginHost -> IO ()
+process :: HasCallStack => PluginHost -> IO ()
 process host = do
     let process = pluginHost_process host
     setTransport process nullPtr
@@ -166,7 +176,7 @@ process host = do
         Plugin.process (plugin_handle plugin) process
 
 
-processEnd :: PluginHost -> Word64 -> Int64 -> IO ()
+processEnd :: HasCallStack => PluginHost -> Word64 -> Int64 -> IO ()
 processEnd host numberOfFrames steadyTime = do
     setThreadType host Unknown
     let process = pluginHost_process host

@@ -8,12 +8,15 @@ import Clap.Interface.Foreign.Events
 import Clap.Interface.Id
 import Clap.Interface.Fixedpoint
 import Data.Int
+import Data.IORef
 import Data.Word
 import Foreign.C.Types
 import Foreign.Marshal.Array
 import Foreign.Marshal.Utils
 import Foreign.Ptr
 import Foreign.Storable
+import GHC.Stack
+import System.IO.Unsafe
 
 coreEventSpaceId :: Word16
 coreEventSpaceId = 0
@@ -27,7 +30,7 @@ data EventConfig = EventConfig
     { eventConfig_time :: Word32
     , eventConfig_spaceId :: Word16
     , eventConfig_flags :: [EventFlag] 
-    }
+    } deriving (Show)
 
 data Event
     = NoteOn NoteEvent
@@ -182,61 +185,71 @@ data Midi2Event = Midi2Event
 
 type InputEventsHandle = Ptr C'clap_input_events
 
-size :: InputEventsHandle -> IO Int32
-size inputEvents = do
+createInputEvents :: IO InputEventsHandle
+createInputEvents = do
+    listPtr <- newArray ([] :: [Ptr C'clap_event_header])
+    sizePtr <- mk'size size
+    getPtr <- mk'get get
+    new $ C'clap_input_events
+        { c'clap_input_events'ctx = castPtr listPtr
+        , c'clap_input_events'size  = sizePtr
+        , c'clap_input_events'get  = getPtr
+        }
+
+size :: InputEventsHandle -> CUInt
+size inputEvents = unsafePerformIO $ do
     funPtr <- peek $ p'clap_input_events'size inputEvents
     pure $ fromIntegral $ mK'size funPtr inputEvents
 
-get :: InputEventsHandle -> Int32 -> IO Event
-get inputEvents index = do
+get :: InputEventsHandle -> CUInt -> Ptr C'clap_event_header
+get inputEvents index = unsafePerformIO $ do
     funPtr <- peek $ p'clap_input_events'get inputEvents
-    let cEvent = mK'get funPtr inputEvents (fromIntegral index)
-    fromStruct cEvent
-
-    where        
-        fromStruct :: Ptr C'clap_event_header -> IO Event
-        fromStruct cEventHeader = do
-            eventType <- peek $ p'clap_event_header'type cEventHeader
-            case eventType of
-                0 -> do
-                    cNoteEvent <- peek $ castPtr cEventHeader
-                    pure $ NoteOn $ noteEventFromStruct cNoteEvent
-                1 -> do
-                    cNoteEvent <- peek $ castPtr cEventHeader
-                    pure $ NoteOff $ noteEventFromStruct cNoteEvent
-                2 -> do
-                    cNoteKillEvent <- peek $ castPtr cEventHeader
-                    pure $ NoteChoke $ noteKillEventFromStruct cNoteKillEvent
-                3 -> do
-                    cNoteKillEvent <- peek $ castPtr cEventHeader
-                    pure $ NoteEnd $ noteKillEventFromStruct cNoteKillEvent
-                4 -> do
-                    cNoteExpressionEvent <- peek $ castPtr cEventHeader
-                    pure $ NoteExpression $ noteExpressionEventFromStruct cNoteExpressionEvent
-                5 -> do
-                    cParamValueEvent <- peek $ castPtr cEventHeader
-                    pure $ ParamValue $ paramValueEventFromStruct cParamValueEvent
-                6 -> do
-                    cParamModEvent <- peek $ castPtr cEventHeader
-                    pure $ ParamMod $ paramModEventFromStruct cParamModEvent
-                7 -> do
-                    cParamGestureEvent <- peek $ castPtr cEventHeader
-                    pure $ ParamGestureBegin $ paramGestureEventFromStruct cParamGestureEvent
-                8 -> do
-                    cParamGestureEvent <- peek $ castPtr cEventHeader
-                    pure $ ParamGestureEnd $ paramGestureEventFromStruct cParamGestureEvent
-                9 -> do
-                    cTransportEvent <- peek $ castPtr cEventHeader
-                    pure $ Transport $ transportEventFromStruct cTransportEvent
-                10 -> do
-                    cMidiEvent <- peek $ castPtr cEventHeader
-                    pure $ Midi $ midiEventFromStruct cMidiEvent
-                11 -> do
-                    cMidiSysexEvent <- peek $ castPtr cEventHeader
-                    MidiSysex <$> midiSysexEventFromStruct cMidiSysexEvent
-                12 -> do
-                    cMidi2Event <- peek $ castPtr cEventHeader
-                    pure $ Midi2 $ midi2EventFromStruct cMidi2Event
+    pure $ mK'get funPtr inputEvents (fromIntegral index)
+    
+readEvent :: Ptr C'clap_event_header -> IO Event
+readEvent cEventHeader = do
+    eventType <- peek $ p'clap_event_header'type cEventHeader
+    case eventType of
+        0 -> do
+            cNoteEvent <- peek $ castPtr cEventHeader
+            pure $ NoteOn $ noteEventFromStruct cNoteEvent
+        1 -> do
+            cNoteEvent <- peek $ castPtr cEventHeader
+            pure $ NoteOff $ noteEventFromStruct cNoteEvent
+        2 -> do
+            cNoteKillEvent <- peek $ castPtr cEventHeader
+            pure $ NoteChoke $ noteKillEventFromStruct cNoteKillEvent
+        3 -> do
+            cNoteKillEvent <- peek $ castPtr cEventHeader
+            pure $ NoteEnd $ noteKillEventFromStruct cNoteKillEvent
+        4 -> do
+            cNoteExpressionEvent <- peek $ castPtr cEventHeader
+            pure $ NoteExpression $ noteExpressionEventFromStruct cNoteExpressionEvent
+        5 -> do
+            cParamValueEvent <- peek $ castPtr cEventHeader
+            pure $ ParamValue $ paramValueEventFromStruct cParamValueEvent
+        6 -> do
+            cParamModEvent <- peek $ castPtr cEventHeader
+            pure $ ParamMod $ paramModEventFromStruct cParamModEvent
+        7 -> do
+            cParamGestureEvent <- peek $ castPtr cEventHeader
+            pure $ ParamGestureBegin $ paramGestureEventFromStruct cParamGestureEvent
+        8 -> do
+            cParamGestureEvent <- peek $ castPtr cEventHeader
+            pure $ ParamGestureEnd $ paramGestureEventFromStruct cParamGestureEvent
+        9 -> do
+            cTransportEvent <- peek $ castPtr cEventHeader
+            pure $ Transport $ transportEventFromStruct cTransportEvent
+        10 -> do
+            cMidiEvent <- peek $ castPtr cEventHeader
+            pure $ Midi $ midiEventFromStruct cMidiEvent
+        11 -> do
+            cMidiSysexEvent <- peek $ castPtr cEventHeader
+            MidiSysex <$> midiSysexEventFromStruct cMidiSysexEvent
+        12 -> do
+            cMidi2Event <- peek $ castPtr cEventHeader
+            pure $ Midi2 $ midi2EventFromStruct cMidi2Event
+    where
 
         noteEventFromStruct cNote = NoteEvent 
             { noteEvent_noteId = fromIntegral $ c'clap_event_note'note_id cNote
@@ -281,7 +294,7 @@ get inputEvents index = do
             , paramValueEvent_key = fromIntegral $ c'clap_event_param_value'key cParamValue
             , paramValueEvent_value = fromCDouble $ c'clap_event_param_value'value cParamValue
             }
-        
+
         paramModEventFromStruct cParamMod = ParamModEvent 
             { paramModEvent_paramId = ClapId $ fromIntegral $ c'clap_event_param_mod'param_id cParamMod
             , paramModEvent_cookie = c'clap_event_param_mod'cookie cParamMod
@@ -292,7 +305,7 @@ get inputEvents index = do
             , paramModEvent_amount = fromCDouble $ c'clap_event_param_mod'amount cParamMod
             }
 
-        
+
         paramGestureEventFromStruct cParamGesture = ParamGestureEvent 
             { paramGestureEvent_paramId = ClapId $ fromIntegral $ c'clap_event_param_gesture'param_id cParamGesture }
 
@@ -336,122 +349,130 @@ get inputEvents index = do
 
 type OutputEventsHandle = Ptr C'clap_output_events
 
-tryPush :: OutputEventsHandle -> EventConfig -> Event -> IO Bool
-tryPush outputEvents eventConfig event = do
+createOutputEvents :: IO OutputEventsHandle
+createOutputEvents = do
+    listPtr <- newArray ([] :: [Ptr C'clap_event_header])
+    tryPushPtr <- mk'try_push tryPush
+    new $ C'clap_output_events
+        { c'clap_output_events'ctx = castPtr listPtr
+        , c'clap_output_events'try_push  = tryPushPtr
+        }
+
+tryPush :: HasCallStack => OutputEventsHandle -> Ptr C'clap_event_header -> CInt
+tryPush outputEvents event = unsafePerformIO $ do
     funPtr <- peek $ p'clap_output_events'try_push outputEvents
-    cEvent <- toStruct event
-    pure $ toBool $ mK'try_push funPtr outputEvents cEvent
+    pure $ mK'try_push funPtr outputEvents event
 
-    where
-        toStruct :: Event -> IO (Ptr C'clap_event_header)
-        toStruct = \case
-            NoteOn noteOn -> castPtr <$> new (noteEventToStruct noteOn)
-            NoteOff noteOff -> castPtr <$> new (noteEventToStruct noteOff)
-            NoteChoke noteChoke -> castPtr <$> new (noteKillEventToStruct noteChoke)
-            NoteEnd noteEnd -> castPtr <$> new (noteKillEventToStruct noteEnd)
-            NoteExpression noteExpression -> castPtr <$> new (noteExpressionEventToStruct noteExpression)
-            ParamValue paramValue -> castPtr <$> new (paramValueEventToStruct paramValue)
-            ParamMod paramMod -> castPtr <$> new (paramModEventToStruct paramMod)
-            ParamGestureBegin paramGesture -> castPtr <$> new (paramGestureEventToStruct paramGesture)
-            ParamGestureEnd paramGesture -> castPtr <$> new (paramGestureEventToStruct paramGesture)
-            Transport transport -> castPtr <$> new (transportEventToStruct transport)
-            Midi midi -> castPtr <$> new (midiEventToStruct midi)
-            MidiSysex midiSysex -> castPtr <$> (midiSysexEventToStruct midiSysex >>= new)
-            Midi2 midi2 -> castPtr <$> new (midi2EventToStruct midi2)
-                    
-            where 
-                noteEventToStruct note = C'clap_event_note
-                    { c'clap_event_note'header = eventToHeader event (undefined :: C'clap_event_note)
-                    , c'clap_event_note'note_id = fromIntegral $ noteEvent_noteId note
-                    , c'clap_event_note'port_index = fromIntegral $ noteEvent_portIndex note
-                    , c'clap_event_note'channel = fromIntegral $ noteEvent_channel note
-                    , c'clap_event_note'key = fromIntegral $ noteEvent_key note
-                    , c'clap_event_note'velocity = CDouble $ noteEvent_velocity note
-                    }
-                noteKillEventToStruct noteKill = C'clap_event_note
-                    { c'clap_event_note'header = eventToHeader event (undefined :: C'clap_event_note)
-                    , c'clap_event_note'note_id = fromIntegral $ noteKillEvent_noteId noteKill
-                    , c'clap_event_note'port_index = fromIntegral $ noteKillEvent_portIndex noteKill
-                    , c'clap_event_note'channel = fromIntegral $ noteKillEvent_channel noteKill
-                    , c'clap_event_note'key = fromIntegral $ noteKillEvent_key noteKill
-                    , c'clap_event_note'velocity = 0
-                    }
-                noteExpressionEventToStruct noteExpression = C'clap_event_note_expression
-                    { c'clap_event_note_expression'header = eventToHeader event (undefined :: C'clap_event_note_expression)
-                    , c'clap_event_note_expression'expression_id = fromIntegral $ noteExpressionToEnumValue (noteExpressionEvent_value noteExpression)
-                    , c'clap_event_note_expression'note_id = fromIntegral $ noteExpressionEvent_noteId noteExpression
-                    , c'clap_event_note_expression'port_index = fromIntegral $ noteExpressionEvent_portIndex noteExpression
-                    , c'clap_event_note_expression'channel = fromIntegral $ noteExpressionEvent_channel noteExpression
-                    , c'clap_event_note_expression'key = fromIntegral $ noteExpressionEvent_key noteExpression
-                    , c'clap_event_note_expression'value = CDouble $ noteExpressionToDouble $ noteExpressionEvent_value noteExpression
-                    }
-                paramValueEventToStruct paramValue = C'clap_event_param_value
-                    { c'clap_event_param_value'header = eventToHeader event (undefined :: C'clap_event_param_value)
-                    , c'clap_event_param_value'param_id = fromIntegral $ unClapId $ paramValueEvent_paramId paramValue
-                    ,  c'clap_event_param_value'cookie = paramValueEvent_cookie paramValue
-                    , c'clap_event_param_value'note_id = fromIntegral $ paramValueEvent_noteId paramValue
-                    , c'clap_event_param_value'port_index = fromIntegral $ paramValueEvent_portIndex paramValue
-                    , c'clap_event_param_value'channel = fromIntegral $ paramValueEvent_channel paramValue
-                    , c'clap_event_param_value'key = fromIntegral $ paramValueEvent_key paramValue
-                    , c'clap_event_param_value'value = CDouble $ paramValueEvent_value paramValue
-                    }
-                paramModEventToStruct paramMod = C'clap_event_param_mod
-                    { c'clap_event_param_mod'header = eventToHeader event (undefined :: C'clap_event_param_mod)
-                    , c'clap_event_param_mod'param_id = fromIntegral $ unClapId $ paramModEvent_paramId paramMod
-                    , c'clap_event_param_mod'cookie = paramModEvent_cookie paramMod
-                    , c'clap_event_param_mod'note_id = fromIntegral $ paramModEvent_noteId paramMod
-                    , c'clap_event_param_mod'port_index = fromIntegral $ paramModEvent_portIndex paramMod
-                    , c'clap_event_param_mod'channel = fromIntegral $ paramModEvent_channel paramMod
-                    , c'clap_event_param_mod'key = fromIntegral $ paramModEvent_key paramMod
-                    , c'clap_event_param_mod'amount = CDouble $ paramModEvent_amount paramMod
-                    }
-                paramGestureEventToStruct paramGesture = C'clap_event_param_gesture
-                    { c'clap_event_param_gesture'header = eventToHeader event (undefined :: C'clap_event_param_mod)
-                    , c'clap_event_param_gesture'param_id = fromIntegral $ unClapId $ paramGestureEvent_paramId paramGesture
-                    }
-                transportEventToStruct transport = C'clap_event_transport
-                    { c'clap_event_transport'header = eventToHeader event (undefined :: C'clap_event_transport)
-                    , c'clap_event_transport'flags = fromIntegral $ flagsToInt $ transportEvent_flags transport
-                    , c'clap_event_transport'song_pos_beats = fromIntegral $ transportEvent_songPositionBeats transport
-                    , c'clap_event_transport'song_pos_seconds = fromIntegral $ transportEvent_songPositionSeconds transport
-                    , c'clap_event_transport'tempo = CDouble $ transportEvent_tempo transport
-                    , c'clap_event_transport'tempo_inc = CDouble $ transportEvent_tempoIncrement transport
-                    , c'clap_event_transport'loop_start_beats = fromIntegral $ transportEvent_loopStartBeats transport
-                    , c'clap_event_transport'loop_end_beats = fromIntegral $ transportEvent_loopEndBeats transport
-                    , c'clap_event_transport'loop_start_seconds = fromIntegral $ transportEvent_loopStartSeconds transport
-                    , c'clap_event_transport'loop_end_seconds = fromIntegral $ transportEvent_loopEndSeconds transport
-                    , c'clap_event_transport'bar_start = fromIntegral $ transportEvent_barStart transport
-                    , c'clap_event_transport'bar_number = fromIntegral $ transportEvent_barNumber transport
-                    , c'clap_event_transport'tsig_num = fromIntegral $ transportEvent_timeSignatureNumerator transport
-                    , c'clap_event_transport'tsig_denom = fromIntegral $ transportEvent_timeSignatureDenominator transport
-                    }
-                midiEventToStruct midi = C'clap_event_midi
-                    { c'clap_event_midi'header = eventToHeader event (undefined :: C'clap_event_midi)
-                    , c'clap_event_midi'port_index = fromIntegral $ midiEvent_portIndex midi
-                    , c'clap_event_midi'data = 
-                        let (one, two, three) = midiEvent_data midi
-                        in fromIntegral <$> [one, two, three]
-                    }
-                midiSysexEventToStruct midiSysex = do
-                    cBuffer <- newArray $ CUChar <$> midiSysexEvent_buffer midiSysex
-                    pure $ C'clap_event_midi_sysex
-                        { c'clap_event_midi_sysex'header = eventToHeader event (undefined :: C'clap_event_midi_sysex)
-                        , c'clap_event_midi_sysex'port_index = fromIntegral $ midiSysexEvent_portIndex midiSysex
-                        , c'clap_event_midi_sysex'buffer = cBuffer
-                        , c'clap_event_midi_sysex'size = fromIntegral $ length $ midiSysexEvent_buffer midiSysex
-                        }
-                midi2EventToStruct midi2 = C'clap_event_midi2
-                    { c'clap_event_midi2'header = eventToHeader event (undefined :: C'clap_event_midi2)
-                    , c'clap_event_midi2'port_index = fromIntegral $ midi2Event_portIndex midi2
-                    , c'clap_event_midi2'data = 
-                        let (one, two, three, four) = midi2Event_data midi2
-                        in fromIntegral <$> [one, two, three, four]
-                    }
+createEvent :: EventConfig -> Event -> IO (Ptr C'clap_event_header)
+createEvent eventConfig event = 
+    case event of
+        NoteOn noteOn -> castPtr <$> new (noteEventToStruct noteOn)
+        NoteOff noteOff -> castPtr <$> new (noteEventToStruct noteOff)
+        NoteChoke noteChoke -> castPtr <$> new (noteKillEventToStruct noteChoke)
+        NoteEnd noteEnd -> castPtr <$> new (noteKillEventToStruct noteEnd)
+        NoteExpression noteExpression -> castPtr <$> new (noteExpressionEventToStruct noteExpression)
+        ParamValue paramValue -> castPtr <$> new (paramValueEventToStruct paramValue)
+        ParamMod paramMod -> castPtr <$> new (paramModEventToStruct paramMod)
+        ParamGestureBegin paramGesture -> castPtr <$> new (paramGestureEventToStruct paramGesture)
+        ParamGestureEnd paramGesture -> castPtr <$> new (paramGestureEventToStruct paramGesture)
+        Transport transport -> castPtr <$> new (transportEventToStruct transport)
+        Midi midi -> castPtr <$> new (midiEventToStruct midi)
+        MidiSysex midiSysex -> castPtr <$> (midiSysexEventToStruct midiSysex >>= new)
+        Midi2 midi2 -> castPtr <$> new (midi2EventToStruct midi2)
+    
+    where 
+        noteEventToStruct note = C'clap_event_note
+            { c'clap_event_note'header = eventToHeader event (undefined :: C'clap_event_note)
+            , c'clap_event_note'note_id = fromIntegral $ noteEvent_noteId note
+            , c'clap_event_note'port_index = fromIntegral $ noteEvent_portIndex note
+            , c'clap_event_note'channel = fromIntegral $ noteEvent_channel note
+            , c'clap_event_note'key = fromIntegral $ noteEvent_key note
+            , c'clap_event_note'velocity = CDouble $ noteEvent_velocity note
+            }
+        noteKillEventToStruct noteKill = C'clap_event_note
+            { c'clap_event_note'header = eventToHeader event (undefined :: C'clap_event_note)
+            , c'clap_event_note'note_id = fromIntegral $ noteKillEvent_noteId noteKill
+            , c'clap_event_note'port_index = fromIntegral $ noteKillEvent_portIndex noteKill
+            , c'clap_event_note'channel = fromIntegral $ noteKillEvent_channel noteKill
+            , c'clap_event_note'key = fromIntegral $ noteKillEvent_key noteKill
+            , c'clap_event_note'velocity = 0
+            }
+        noteExpressionEventToStruct noteExpression = C'clap_event_note_expression
+            { c'clap_event_note_expression'header = eventToHeader event (undefined :: C'clap_event_note_expression)
+            , c'clap_event_note_expression'expression_id = fromIntegral $ noteExpressionToEnumValue (noteExpressionEvent_value noteExpression)
+            , c'clap_event_note_expression'note_id = fromIntegral $ noteExpressionEvent_noteId noteExpression
+            , c'clap_event_note_expression'port_index = fromIntegral $ noteExpressionEvent_portIndex noteExpression
+            , c'clap_event_note_expression'channel = fromIntegral $ noteExpressionEvent_channel noteExpression
+            , c'clap_event_note_expression'key = fromIntegral $ noteExpressionEvent_key noteExpression
+            , c'clap_event_note_expression'value = CDouble $ noteExpressionToDouble $ noteExpressionEvent_value noteExpression
+            }
+        paramValueEventToStruct paramValue = C'clap_event_param_value
+            { c'clap_event_param_value'header = eventToHeader event (undefined :: C'clap_event_param_value)
+            , c'clap_event_param_value'param_id = fromIntegral $ unClapId $ paramValueEvent_paramId paramValue
+            ,  c'clap_event_param_value'cookie = paramValueEvent_cookie paramValue
+            , c'clap_event_param_value'note_id = fromIntegral $ paramValueEvent_noteId paramValue
+            , c'clap_event_param_value'port_index = fromIntegral $ paramValueEvent_portIndex paramValue
+            , c'clap_event_param_value'channel = fromIntegral $ paramValueEvent_channel paramValue
+            , c'clap_event_param_value'key = fromIntegral $ paramValueEvent_key paramValue
+            , c'clap_event_param_value'value = CDouble $ paramValueEvent_value paramValue
+            }
+        paramModEventToStruct paramMod = C'clap_event_param_mod
+            { c'clap_event_param_mod'header = eventToHeader event (undefined :: C'clap_event_param_mod)
+            , c'clap_event_param_mod'param_id = fromIntegral $ unClapId $ paramModEvent_paramId paramMod
+            , c'clap_event_param_mod'cookie = paramModEvent_cookie paramMod
+            , c'clap_event_param_mod'note_id = fromIntegral $ paramModEvent_noteId paramMod
+            , c'clap_event_param_mod'port_index = fromIntegral $ paramModEvent_portIndex paramMod
+            , c'clap_event_param_mod'channel = fromIntegral $ paramModEvent_channel paramMod
+            , c'clap_event_param_mod'key = fromIntegral $ paramModEvent_key paramMod
+            , c'clap_event_param_mod'amount = CDouble $ paramModEvent_amount paramMod
+            }
+        paramGestureEventToStruct paramGesture = C'clap_event_param_gesture
+            { c'clap_event_param_gesture'header = eventToHeader event (undefined :: C'clap_event_param_mod)
+            , c'clap_event_param_gesture'param_id = fromIntegral $ unClapId $ paramGestureEvent_paramId paramGesture
+            }
+        transportEventToStruct transport = C'clap_event_transport
+            { c'clap_event_transport'header = eventToHeader event (undefined :: C'clap_event_transport)
+            , c'clap_event_transport'flags = fromIntegral $ flagsToInt $ transportEvent_flags transport
+            , c'clap_event_transport'song_pos_beats = fromIntegral $ transportEvent_songPositionBeats transport
+            , c'clap_event_transport'song_pos_seconds = fromIntegral $ transportEvent_songPositionSeconds transport
+            , c'clap_event_transport'tempo = CDouble $ transportEvent_tempo transport
+            , c'clap_event_transport'tempo_inc = CDouble $ transportEvent_tempoIncrement transport
+            , c'clap_event_transport'loop_start_beats = fromIntegral $ transportEvent_loopStartBeats transport
+            , c'clap_event_transport'loop_end_beats = fromIntegral $ transportEvent_loopEndBeats transport
+            , c'clap_event_transport'loop_start_seconds = fromIntegral $ transportEvent_loopStartSeconds transport
+            , c'clap_event_transport'loop_end_seconds = fromIntegral $ transportEvent_loopEndSeconds transport
+            , c'clap_event_transport'bar_start = fromIntegral $ transportEvent_barStart transport
+            , c'clap_event_transport'bar_number = fromIntegral $ transportEvent_barNumber transport
+            , c'clap_event_transport'tsig_num = fromIntegral $ transportEvent_timeSignatureNumerator transport
+            , c'clap_event_transport'tsig_denom = fromIntegral $ transportEvent_timeSignatureDenominator transport
+            }
+        midiEventToStruct midi = C'clap_event_midi
+            { c'clap_event_midi'header = eventToHeader event (undefined :: C'clap_event_midi)
+            , c'clap_event_midi'port_index = fromIntegral $ midiEvent_portIndex midi
+            , c'clap_event_midi'data = 
+                let (one, two, three) = midiEvent_data midi
+                in fromIntegral <$> [one, two, three]
+            }
+        midiSysexEventToStruct midiSysex = do
+            cBuffer <- newArray $ CUChar <$> midiSysexEvent_buffer midiSysex
+            pure $ C'clap_event_midi_sysex
+                { c'clap_event_midi_sysex'header = eventToHeader event (undefined :: C'clap_event_midi_sysex)
+                , c'clap_event_midi_sysex'port_index = fromIntegral $ midiSysexEvent_portIndex midiSysex
+                , c'clap_event_midi_sysex'buffer = cBuffer
+                , c'clap_event_midi_sysex'size = fromIntegral $ length $ midiSysexEvent_buffer midiSysex
+                }
+        midi2EventToStruct midi2 = C'clap_event_midi2
+            { c'clap_event_midi2'header = eventToHeader event (undefined :: C'clap_event_midi2)
+            , c'clap_event_midi2'port_index = fromIntegral $ midi2Event_portIndex midi2
+            , c'clap_event_midi2'data = 
+                let (one, two, three, four) = midi2Event_data midi2
+                in fromIntegral <$> [one, two, three, four]
+            }
 
-                eventToHeader event cEvent = C'clap_event_header 
-                    { c'clap_event_header'size = fromIntegral $ sizeOf cEvent
-                    , c'clap_event_header'time = fromIntegral $ eventConfig_time eventConfig
-                    , c'clap_event_header'space_id = fromIntegral $ eventConfig_spaceId eventConfig
-                    , c'clap_event_header'type = fromIntegral $ eventToEnumValue event
-                    , c'clap_event_header'flags = fromIntegral $ flagsToInt $ eventConfig_flags eventConfig
-                    } 
+        eventToHeader event cEvent = C'clap_event_header 
+            { c'clap_event_header'size = fromIntegral $ sizeOf cEvent
+            , c'clap_event_header'time = fromIntegral $ eventConfig_time eventConfig
+            , c'clap_event_header'space_id = fromIntegral $ eventConfig_spaceId eventConfig
+            , c'clap_event_header'type = fromIntegral $ eventToEnumValue event
+            , c'clap_event_header'flags = fromIntegral $ flagsToInt $ eventConfig_flags eventConfig
+            } 

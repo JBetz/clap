@@ -129,3 +129,5 @@ hide :: PluginGuiHandle -> PluginHandle -> IO Bool
 hide pluginGui plugin = do
     funPtr <- peek $ p'clap_plugin_gui'hide pluginGui
     pure $ toBool $ mK'hide funPtr plugin
+
+type HostGuiHandle = Ptr C'clap_host_gui

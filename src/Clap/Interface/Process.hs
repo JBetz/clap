@@ -6,6 +6,7 @@ import Clap.Interface.Foreign.Events
 import Clap.Interface.Foreign.Process
 import Data.Int
 import Data.Word
+import Foreign.Marshal.Utils
 import Foreign.Ptr
 import Foreign.Storable
 
@@ -19,6 +20,19 @@ data ProcessStatus
     | Sleep
     deriving (Enum)
 
+createProcess :: IO ProcessHandle 
+createProcess = new $ C'clap_process 
+    { c'clap_process'steady_time = 0
+    , c'clap_process'frames_count = 0
+    , c'clap_process'transport = nullPtr
+    , c'clap_process'audio_inputs = nullPtr
+    , c'clap_process'audio_outputs = nullPtr
+    , c'clap_process'audio_inputs_count = 0
+    , c'clap_process'audio_outputs_count = 0 
+    , c'clap_process'in_events = nullPtr
+    , c'clap_process'out_events = nullPtr
+    }
+ 
 setSteadyTime :: ProcessHandle -> Int64 -> IO ()
 setSteadyTime process =
     poke (p'clap_process'steady_time process) . fromIntegral

@@ -32,7 +32,7 @@ createHost (HostConfig clapVersion data' name vendor url version getExtension re
     vendorC <- newCString vendor
     urlC <- newCString url
     versionC <- newCString version
-    getExtensionC <- Clap.Interface.Foreign.Host.mk'get_extension (\cHostHandle cString -> do
+    getExtensionC <- mk'get_extension (\cHostHandle cString -> do
         string <- peekCString cString
         getExtension cHostHandle string)
     requestRestartC <- mk'request_restart requestRestart

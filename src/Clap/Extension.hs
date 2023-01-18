@@ -4,32 +4,38 @@ module Clap.Extension where
 
 import Clap.Interface.Plugin as Plugin
 import Clap.Interface.Extension.Foreign.Gui
+import Clap.Interface.Extension.Foreign.Log
 import Clap.Interface.Extension.Gui as Gui
 import Clap.Interface.Extension.Log as Log
 import Clap.Interface.Extension.Render as Render
+import Debug.Trace
+import Foreign.C.String
 import Foreign.Ptr
+import Foreign.Marshal.Utils
 
-data Extensions = Extensions
-    { extensions_gui :: Maybe PluginGuiHandle
-    , extensions_log :: Maybe HostLogHandle
-    , extensions_render :: Maybe PluginRenderHandle
+data HostExtensions = HostExtensions
+    { hostExtensions_gui :: HostGuiHandle
+    , hostExtensions_log :: HostLogHandle
     } deriving (Show)
 
-initializeExtensions :: PluginHandle ->  IO Extensions
-initializeExtensions plugin = Extensions
-    <$> initializeExtension Gui.extensionId
-    <*> initializeExtension Log.extensionId
-    <*> initializeExtension Render.extensionId
-    where 
-        initializeExtension id =
-            fmap castPtr <$> Plugin.getExtension plugin id 
+initializeExtensions :: IO HostExtensions
+initializeExtensions = do
+    gui <- new $ C'clap_host_gui 
+        { c'clap_host_gui'resize_hints_changed = nullFunPtr
+        , c'clap_host_gui'request_resize = nullFunPtr
+        , c'clap_host_gui'request_show = nullFunPtr
+        , c'clap_host_gui'request_hide = nullFunPtr
+        , c'clap_host_gui'closed = nullFunPtr
+        }
+    log <- createHostLog $ \hostHandle logLevel message ->
+        putStrLn $ Prelude.show logLevel <> ": " <> message 
+    pure $ HostExtensions
+        { hostExtensions_gui = gui
+        , hostExtensions_log = log 
+        }
 
-getExtension :: Extensions -> String -> IO (Ptr ())
+getExtension :: HostExtensions -> String -> IO (Ptr ())
 getExtension extensions name = pure $ if
-    | name == Gui.extensionId -> extract extensions_gui
-    | name == Log.extensionId -> extract extensions_log
-    | name == Render.extensionId -> extract extensions_render
+    | name == Gui.extensionId -> castPtr $ hostExtensions_gui extensions
+    | name == Log.extensionId -> castPtr $ hostExtensions_log extensions
     | otherwise -> nullPtr
-    where
-        extract selector =
-            maybe nullPtr castPtr (selector extensions)
