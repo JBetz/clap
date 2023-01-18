@@ -1,6 +1,7 @@
 module Clap.Library.POSIX where
 
 import Clap.Interface.Entry
+import Foreign.Ptr
 import System.Posix.DynamicLinker
 import System.Directory
 
@@ -13,7 +14,7 @@ newtype PluginLibrary = PluginLibrary { unPluginLibrary :: DL }
     deriving (Show)
 
 openPluginLibrary :: FilePath -> IO PluginLibrary
-openPluginLibrary path = dlopen path [RTLD_NOW] <$> DLL.loadLibrary
+openPluginLibrary path = PluginLibrary <$> dlopen path [RTLD_NOW]
 
 closePluginLibrary :: PluginLibrary -> IO ()
 closePluginLibrary (PluginLibrary dl) =
