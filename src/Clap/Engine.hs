@@ -48,7 +48,8 @@ createEngine hostConfig = do
         , engine_pluginHost = pluginHost
         , engine_steadyTime = 0
         , engine_sampleRate = 44100
-        , engine_numberOfFrames = 0
+        -- TODO: What's a sane default?
+        , engine_numberOfFrames = 1
         , engine_inputs = inputs   
         , engine_outputs = outputs
         , engine_audioStream = audioStream
