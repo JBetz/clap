@@ -1,3 +1,5 @@
+{-# LANGUAGE BangPatterns #-}
+
 module Clap.Host where
 
 import Clap.Extension
@@ -158,8 +160,9 @@ activateAll host sampleRate blockSize = do
 deactivate :: PluginHost -> PluginId -> IO ()
 deactivate host pluginId = do
     plugin <- getPlugin host pluginId
-    Plugin.deactivate (plugin_handle plugin)
-    setState plugin Inactive
+    whenM (isPluginActive plugin) $ do 
+        Plugin.deactivate (plugin_handle plugin)
+        setState plugin Inactive
 
 deactivateAll :: PluginHost -> IO ()
 deactivateAll host = do
@@ -195,7 +198,7 @@ process host = do
                 then ActiveAndProcessing
                 else ActiveWithError
         whenM (isPluginProcessing plugin) $ do
-            status <- Plugin.process (plugin_handle plugin) process'
+            !status <- Plugin.process (plugin_handle plugin) process'
             setProcessStatus plugin status
 
 processEnd :: PluginHost -> Word64 -> Int64 -> IO ()
@@ -212,13 +215,13 @@ setThreadType host =
 setPorts :: PluginHost -> BufferData t -> BufferData t -> IO ()
 setPorts host inputs outputs = do
     let audioIn = pluginHost_audioIn host
-    setChannelCount audioIn 0
+    setChannelCount audioIn 2
     setBufferData audioIn inputs
     setConstantMask audioIn 0
     setLatency audioIn 0
     
     let audioOut = pluginHost_audioOut host
-    setChannelCount audioOut 0
+    setChannelCount audioOut 2
     setBufferData audioOut outputs
     setConstantMask audioOut 0
     setLatency audioOut 0
@@ -235,6 +238,14 @@ setState plugin = writeIORef (plugin_state plugin)
 
 setProcessStatus :: Plugin -> ProcessStatus -> IO ()
 setProcessStatus plugin = writeIORef (plugin_processStatus plugin) . Just
+
+isPluginActive :: Plugin -> IO Bool
+isPluginActive plugin = do
+    state <- readIORef (plugin_state plugin)
+    pure $ case state of
+        Inactive -> False
+        InactiveWithError -> False
+        _ -> True
 
 isPluginProcessing :: Plugin -> IO Bool
 isPluginProcessing plugin = (== ActiveAndProcessing) <$> readIORef (plugin_state plugin)
