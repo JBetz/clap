@@ -14,7 +14,6 @@ import Foreign.C.Types
 import Foreign.Marshal.Alloc
 import Foreign.Marshal.Array
 import Foreign.Ptr
-import GHC.Stack
 import Sound.PortAudio as PortAudio
 import Sound.PortAudio.Base
 
@@ -48,8 +47,7 @@ createEngine hostConfig = do
         , engine_pluginHost = pluginHost
         , engine_steadyTime = 0
         , engine_sampleRate = 44100
-        -- TODO: What's a sane default?
-        , engine_numberOfFrames = 1
+        , engine_numberOfFrames = 256
         , engine_inputs = inputs   
         , engine_outputs = outputs
         , engine_audioStream = audioStream
@@ -78,7 +76,7 @@ start engine = do
                     activateAll pluginHost (engine_sampleRate engine) (engine_numberOfFrames engine)
                     startStream stream
             
-audioCallback :: HasCallStack => Engine -> PaStreamCallbackTimeInfo -> [StreamCallbackFlag] -> CULong -> Ptr CFloat -> Ptr CFloat -> IO StreamResult
+audioCallback :: Engine -> PaStreamCallbackTimeInfo -> [StreamCallbackFlag] -> CULong -> Ptr CFloat -> Ptr CFloat -> IO StreamResult
 audioCallback engine _timeInfo _flags numberOfInputSamples inputPtr outputPtr = do
     let host = engine_pluginHost engine
     input <- peekArray (fromIntegral $ numberOfInputSamples * 2) inputPtr
