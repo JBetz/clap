@@ -1,6 +1,6 @@
 module Main where
 
-import qualified Clap as C
+import Clap.Example
 
 main :: IO ()
-main = C.reproduceFailure
+main = playNote 100
