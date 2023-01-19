@@ -16,7 +16,7 @@ Overall, this library is very WIP and not ready for production use. But it very 
 
 On Linux, it builds and runs, but I haven't been able to test the audio output since I'm using WSL which doesn't support audio.
 
-On Windows, the executable build fails but all the modules can be loaded in GHCI. However, beyond the first few FFI calls it fails with an access violation error that is likely an issue with the Windows runtime.
+On Windows, the executable build fails but all the modules can be loaded in GHCI and run from there.
 
 ## Modules
 
