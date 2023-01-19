@@ -12,11 +12,8 @@ Clap version: 1.1.6
 
 # Implementation status
 
-Overall, this library is very WIP and not ready for production use. But it very much aims to be, with the long term goal of being a piece of a larger audio engine written in Haskell that can be used as a modular backend for building DAWs and other music software. It would include a sequencer, audio I/O, plugin host, and SoundFont player. 
+Overall, this library is very WIP and not ready for production use. But it very much aims to be, with the long term goal of being a piece of a larger audio engine written in Haskell that can be used as a modular backend for building DAWs and other music software. It would handle things like sequencing, audio I/O, plugin hosting, SoundFonts, and more. 
 
-On Linux, it builds and runs, but I haven't been able to test the audio output since I'm using WSL which doesn't support audio.
-
-On Windows, the executable build fails but all the modules can be loaded in GHCI and run from there.
 
 ## Modules
 
