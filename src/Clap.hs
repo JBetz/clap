@@ -2,7 +2,7 @@ module Clap
     ( module Engine
     , module Extension
     , module Host
-    , module Debug
+    , module Example
     , HostConfig (..)
     , ClapVersion (..)
     , hostClapVersion
@@ -10,7 +10,7 @@ module Clap
     , pluginLibraryPaths
     ) where
 
-import Clap.Debug as Debug
+import Clap.Example as Example
 import Clap.Engine as Engine
 import Clap.Extension as Extension
 import Clap.Host as Host
