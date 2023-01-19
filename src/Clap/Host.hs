@@ -58,6 +58,8 @@ data PluginException
     | EntryInitializationFailed
     | PluginInitializationFailed
     | CreationFailed
+    | ActivationFailed
+    | StartProcessingFailed
     | InvalidPluginId
     deriving (Show)
 
@@ -128,8 +130,9 @@ activate host pluginId sampleRate blockSize = do
 activateAll :: PluginHost -> Double -> Word32 -> IO ()
 activateAll host sampleRate blockSize = do
     plugins <- readIORef (pluginHost_plugins host) 
-    for_ (Map.elems plugins) $ \plugin ->
-        Plugin.activate (plugin_handle plugin) sampleRate blockSize blockSize
+    for_ (Map.elems plugins) $ \plugin -> do
+        isActivated <- Plugin.activate (plugin_handle plugin) sampleRate blockSize blockSize
+        unless isActivated $ throw ActivationFailed
 
 deactivate :: PluginHost -> PluginId -> IO ()
 deactivate host pluginId = do
@@ -165,9 +168,12 @@ process host = do
     setAudioOutputsCount process' 1
     plugins <- readIORef $ pluginHost_plugins host
     for_ (Map.elems plugins) $ \plugin -> do
-        _ <- startProcessing (plugin_handle plugin)
-        processStatus <- Plugin.process (plugin_handle plugin) process'
-        print processStatus
+        isStarted <- startProcessing (plugin_handle plugin)
+        if  isStarted 
+            then do  
+                processStatus <- Plugin.process (plugin_handle plugin) process'
+                print processStatus
+            else throw StartProcessingFailed
 
 processEnd :: PluginHost -> Word64 -> Int64 -> IO ()
 processEnd host numberOfFrames steadyTime = do
