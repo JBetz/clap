@@ -7,8 +7,8 @@ import Clap.Interface.Foreign
 import Clap.Interface.Foreign.Events
 import Clap.Interface.Id
 import Clap.Interface.Fixedpoint
-import Data.Int
 import Data.IORef
+import Data.Int
 import Data.Word
 import Foreign.C.Types
 import Foreign.Marshal.Array
@@ -16,10 +16,11 @@ import Foreign.Marshal.Utils
 import Foreign.Ptr
 import Foreign.Storable
 import GHC.Stack
-import System.IO.Unsafe
 
 coreEventSpaceId :: Word16
 coreEventSpaceId = 0
+
+type EventHandle = Ptr C'clap_event_header
 
 data EventFlag 
     = IsLive
@@ -185,76 +186,71 @@ data Midi2Event = Midi2Event
 
 type InputEventsHandle = Ptr C'clap_input_events
 
-createInputEvents :: IO InputEventsHandle
-createInputEvents = do
-    listPtr <- newArray []
-    sizePtr <- mk'size size
-    getPtr <- mk'get get
+createInputEvents :: IORef [EventHandle] -> IO InputEventsHandle
+createInputEvents events = do
+    sizePtr <- mk'size $ size events
+    getPtr <- mk'get $ get events
     new $ C'clap_input_events
-        { c'clap_input_events'ctx = listPtr
+        { c'clap_input_events'ctx = nullPtr
         , c'clap_input_events'size  = sizePtr
         , c'clap_input_events'get  = getPtr
         }
 
-size :: InputEventsHandle -> CUInt
-size inputEvents = unsafePerformIO $ do
-    length <- lengthArray0 nullPtr $ p'clap_input_events'ctx inputEvents
-    pure $ fromIntegral length
+size :: IORef [EventHandle] -> InputEventsHandle -> IO CUInt
+size events _ = fromIntegral . length <$> readIORef events
+    
+get :: IORef [EventHandle] -> InputEventsHandle -> CUInt -> IO (Ptr C'clap_event_header)
+get events _ index = (!! fromIntegral index) <$> readIORef events
 
-get :: InputEventsHandle -> CUInt -> Ptr C'clap_event_header
-get inputEvents index = unsafePerformIO $ do
-    events <- peekArray0 nullPtr $ p'clap_input_events'ctx inputEvents
-    pure $ castPtr $ events !! fromIntegral index
-
-push :: InputEventsHandle -> EventConfig -> Event -> IO ()
-push inputEvents eventConfig event = do
-    events <- peekArray0 nullPtr $ p'clap_input_events'ctx inputEvents
+push :: IORef [EventHandle] -> EventConfig -> Event -> IO ()
+push events eventConfig event = do
     newEvent <- createEvent eventConfig event
-    pokeArray (p'clap_input_events'ctx inputEvents) (events <> [castPtr newEvent])
+    modifyIORef events (<> [newEvent]) 
 
-readEvent :: Ptr C'clap_event_header -> IO Event
+readEvent :: EventHandle -> IO (Maybe Event)
 readEvent cEventHeader = do
     eventType <- peek $ p'clap_event_header'type cEventHeader
     case eventType of
         0 -> do
             cNoteEvent <- peek $ castPtr cEventHeader
-            pure $ NoteOn $ noteEventFromStruct cNoteEvent
+            pure $ Just . NoteOn $ noteEventFromStruct cNoteEvent
         1 -> do
             cNoteEvent <- peek $ castPtr cEventHeader
-            pure $ NoteOff $ noteEventFromStruct cNoteEvent
+            pure $ Just . NoteOff $ noteEventFromStruct cNoteEvent
         2 -> do
             cNoteKillEvent <- peek $ castPtr cEventHeader
-            pure $ NoteChoke $ noteKillEventFromStruct cNoteKillEvent
+            pure $ Just . NoteChoke $ noteKillEventFromStruct cNoteKillEvent
         3 -> do
             cNoteKillEvent <- peek $ castPtr cEventHeader
-            pure $ NoteEnd $ noteKillEventFromStruct cNoteKillEvent
+            pure $ Just . NoteEnd $ noteKillEventFromStruct cNoteKillEvent
         4 -> do
             cNoteExpressionEvent <- peek $ castPtr cEventHeader
-            pure $ NoteExpression $ noteExpressionEventFromStruct cNoteExpressionEvent
+            pure $ Just . NoteExpression $ noteExpressionEventFromStruct cNoteExpressionEvent
         5 -> do
             cParamValueEvent <- peek $ castPtr cEventHeader
-            pure $ ParamValue $ paramValueEventFromStruct cParamValueEvent
+            pure $ Just . ParamValue $ paramValueEventFromStruct cParamValueEvent
         6 -> do
             cParamModEvent <- peek $ castPtr cEventHeader
-            pure $ ParamMod $ paramModEventFromStruct cParamModEvent
+            pure $ Just . ParamMod $ paramModEventFromStruct cParamModEvent
         7 -> do
             cParamGestureEvent <- peek $ castPtr cEventHeader
-            pure $ ParamGestureBegin $ paramGestureEventFromStruct cParamGestureEvent
+            pure $ Just . ParamGestureBegin $ paramGestureEventFromStruct cParamGestureEvent
         8 -> do
             cParamGestureEvent <- peek $ castPtr cEventHeader
-            pure $ ParamGestureEnd $ paramGestureEventFromStruct cParamGestureEvent
+            pure $ Just . ParamGestureEnd $ paramGestureEventFromStruct cParamGestureEvent
         9 -> do
             cTransportEvent <- peek $ castPtr cEventHeader
-            pure $ Transport $ transportEventFromStruct cTransportEvent
+            pure $ Just . Transport $ transportEventFromStruct cTransportEvent
         10 -> do
             cMidiEvent <- peek $ castPtr cEventHeader
-            pure $ Midi $ midiEventFromStruct cMidiEvent
+            pure $ Just . Midi $ midiEventFromStruct cMidiEvent
         11 -> do
             cMidiSysexEvent <- peek $ castPtr cEventHeader
-            MidiSysex <$> midiSysexEventFromStruct cMidiSysexEvent
+            Just . MidiSysex <$> midiSysexEventFromStruct cMidiSysexEvent
         12 -> do
             cMidi2Event <- peek $ castPtr cEventHeader
-            pure $ Midi2 $ midi2EventFromStruct cMidi2Event
+            pure $ Just . Midi2 $ midi2EventFromStruct cMidi2Event
+        _ -> pure Nothing
     where
 
         noteEventFromStruct cNote = NoteEvent 
@@ -287,6 +283,7 @@ readEvent cEventHeader = do
                             4 -> Expression
                             5 -> Brightness
                             6 -> Pressure
+                            _ -> Volume
                     CDouble value = c'clap_event_note_expression'value cNoteExpression
                 in constructor value
             }
@@ -364,10 +361,10 @@ createOutputEvents = do
         , c'clap_output_events'try_push  = tryPushPtr
         }
 
-tryPush :: HasCallStack => OutputEventsHandle -> Ptr C'clap_event_header -> CInt
-tryPush outputEvents event = unsafePerformIO $ do
+tryPush :: HasCallStack => OutputEventsHandle -> Ptr C'clap_event_header -> IO CInt
+tryPush outputEvents event = do
     funPtr <- peek $ p'clap_output_events'try_push outputEvents
-    pure $ mK'try_push funPtr outputEvents event
+    mK'try_push funPtr outputEvents event
 
 createEvent :: EventConfig -> Event -> IO (Ptr C'clap_event_header)
 createEvent eventConfig event = 
