@@ -6,7 +6,6 @@ import Clap.Interface.Foreign.AudioBuffer
 import Data.Word
 import Foreign.C.Types
 import Foreign.Ptr
-import Foreign.Marshal.Array
 import Foreign.Marshal.Utils
 import Foreign.Storable
 
