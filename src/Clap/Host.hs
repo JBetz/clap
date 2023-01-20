@@ -141,7 +141,7 @@ load host (filePath, index) = do
     where        
         addPlugin :: PluginId -> Plugin -> IO ()
         addPlugin key plugin =
-            modifyIORef (pluginHost_plugins host) $ Map.insert key plugin
+            modifyIORef' (pluginHost_plugins host) $ Map.insert key plugin
 
 activate :: PluginHost -> PluginId -> Double -> Word32 -> IO ()
 activate host pluginId sampleRate blockSize = do

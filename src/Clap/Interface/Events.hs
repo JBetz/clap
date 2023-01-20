@@ -205,7 +205,7 @@ get events _ index = (!! fromIntegral index) <$> readIORef events
 push :: IORef [EventHandle] -> EventConfig -> Event -> IO ()
 push events eventConfig event = do
     newEvent <- createEvent eventConfig event
-    modifyIORef events (<> [newEvent]) 
+    modifyIORef' events (<> [newEvent]) 
 
 readEvent :: EventHandle -> IO (Maybe Event)
 readEvent cEventHeader = do
