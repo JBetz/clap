@@ -74,7 +74,6 @@ library
         other-modules: Clap.Library.Windows
         build-depends: Win32
         cpp-options:   -DWINDOWS
-        extra-lib-dirs: C:\\ghcup\\msys64\\mingw64\\bin
     else
         other-modules: Clap.Library.POSIX
         build-depends: unix
