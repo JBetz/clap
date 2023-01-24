@@ -32,7 +32,7 @@ data ThreadType
 
 data PluginHost = PluginHost
     { pluginHost_handle :: HostHandle
-    , pluginHost_plugins :: IORef (Map PluginId Plugin)
+    , pluginHost_plugins :: IORef (Map ClapId Plugin)
     , pluginHost_threadType :: IORef ThreadType
     , pluginHost_process :: ProcessHandle
     , pluginHost_audioIn :: AudioBufferHandle
@@ -43,7 +43,8 @@ data PluginHost = PluginHost
     , pluginHost_extensions :: HostExtensions
     }
 
-type PluginId = (FilePath, Int)
+newtype ClapId = ClapId (FilePath, Int)
+    deriving (Eq, Ord, Show)
 
 data PluginState
     = Inactive
@@ -105,8 +106,8 @@ createPluginHost hostConfig = do
         , pluginHost_extensions = extensions
         }
 
-load :: PluginHost -> PluginId -> IO ()
-load host (filePath, index) = do
+load :: PluginHost -> ClapId -> IO ()
+load host (ClapId (filePath, index)) = do
     let hostHandle = pluginHost_handle host 
     library <- openPluginLibrary filePath
     entry <- lookupPluginEntry library
@@ -129,7 +130,7 @@ load host (filePath, index) = do
                         unless isPluginInitialized $ throw PluginInitializationFailed
                         state <- newIORef Inactive
                         processStatus <- newIORef Nothing
-                        addPlugin (filePath, index) $ Plugin
+                        addPlugin (ClapId (filePath, index)) $ Plugin
                             { plugin_library = library
                             , plugin_entry = entry
                             , plugin_factory = factory
@@ -139,13 +140,13 @@ load host (filePath, index) = do
                             , plugin_processStatus = processStatus
                             }
     where        
-        addPlugin :: PluginId -> Plugin -> IO ()
+        addPlugin :: ClapId -> Plugin -> IO ()
         addPlugin key plugin =
             modifyIORef' (pluginHost_plugins host) $ Map.insert key plugin
 
-activate :: PluginHost -> PluginId -> Double -> Word32 -> IO ()
-activate host pluginId sampleRate blockSize = do
-    plugin <- getPlugin host pluginId
+activate :: PluginHost -> ClapId -> Double -> Word32 -> IO ()
+activate host clapId sampleRate blockSize = do
+    plugin <- getPlugin host clapId
     isActivated <- Plugin.activate (plugin_handle plugin) sampleRate blockSize blockSize
     setState plugin $ if isActivated 
         then ActiveAndSleeping
@@ -154,12 +155,12 @@ activate host pluginId sampleRate blockSize = do
 activateAll :: PluginHost -> Double -> Word32 -> IO ()
 activateAll host sampleRate blockSize = do
     plugins <- readIORef (pluginHost_plugins host) 
-    for_ (Map.keys plugins) $ \pluginId ->
-        activate host pluginId sampleRate blockSize
+    for_ (Map.keys plugins) $ \clapId ->
+        activate host clapId sampleRate blockSize
 
-deactivate :: PluginHost -> PluginId -> IO ()
-deactivate host pluginId = do
-    plugin <- getPlugin host pluginId
+deactivate :: PluginHost -> ClapId -> IO ()
+deactivate host clapId = do
+    plugin <- getPlugin host clapId 
     whenM (isPluginActive plugin) $ do 
         Plugin.deactivate (plugin_handle plugin)
         setState plugin Inactive
@@ -176,8 +177,8 @@ processBegin host framesCount steadyTime = do
     setFramesCount process' framesCount
     setSteadyTime process' steadyTime
     
-processEvent :: PluginHost -> EventConfig -> Event -> IO ()
-processEvent host eventConfig event =
+processEvent :: PluginHost -> ClapId -> EventConfig -> Event -> IO ()
+processEvent host _clapId eventConfig event =
     push (pluginHost_events host) eventConfig event
 
 process :: PluginHost -> IO ()
@@ -226,10 +227,10 @@ setPorts host inputs outputs = do
     setConstantMask audioOut 0
     setLatency audioOut 0
 
-getPlugin :: PluginHost -> PluginId -> IO Plugin
-getPlugin host pluginId = do
+getPlugin :: PluginHost -> ClapId -> IO Plugin
+getPlugin host clapId = do
     plugins <- readIORef $ pluginHost_plugins host
-    case Map.lookup pluginId plugins of
+    case Map.lookup clapId plugins of
         Nothing -> throw InvalidPluginId
         Just plugin -> pure plugin
 
