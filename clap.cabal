@@ -5,7 +5,6 @@ extra-source-files: CHANGELOG.md
 
 library
     exposed-modules:  Clap,
-                      Clap.Example,
                       Clap.Engine,
                       Clap.Extension,
                       Clap.Host,

@@ -1,4 +1,4 @@
-module Clap.Example where
+module Main where
 
 import Clap.Engine as Engine
 import Clap.Interface.Events
