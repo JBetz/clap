@@ -8,11 +8,11 @@ Clap version: 1.1.6
 
 `Clap.Interface.*` provides idiomatic Haskell types and functions for using the CLAP interface.
 
-`Clap.*` has higher-level functions for building a CLAP host.
+`Clap.*` has higher-level functions for building a CLAP host. See [ensemble](https://github.com/JBetz/ensemble) for an example.
 
 # Implementation status
 
-Overall, this library is very WIP and not ready for production use. But it very much aims to be, with the long term goal of being a piece of a larger audio engine written in Haskell that can be used as a modular backend for building DAWs and other music software. It would handle things like sequencing, audio I/O, plugin hosting, SoundFonts, and more. 
+Overall, this library is very WIP and not ready for production use.
 
 
 ## Modules
