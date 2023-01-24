@@ -2,13 +2,9 @@ module Clap.Interface.Foreign where
 
 import Control.Applicative
 import Data.Bits
-import Data.Int
 import Data.Maybe
 import Data.Word
 import Foreign.C
-import Foreign.Marshal.Alloc
-import Foreign.Marshal.Utils
-import Foreign.Ptr
 
 fromCInt :: CInt -> Int
 fromCInt = fromIntegral

@@ -1,6 +1,5 @@
 module Clap.Interface.Id where
 
-import Clap.Interface.Foreign.Id
 import Data.Bits
 import Data.Int
 
