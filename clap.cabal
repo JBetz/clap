@@ -5,7 +5,6 @@ extra-source-files: CHANGELOG.md
 
 library
     exposed-modules:  Clap,
-                      Clap.Engine,
                       Clap.Extension,
                       Clap.Host,
                       Clap.Library,
@@ -67,8 +66,7 @@ library
                       containers,
                       directory,
                       extra,
-                      filepath,
-                      portaudio
+                      filepath
     if os(windows)
         other-modules: Clap.Library.Windows
         build-depends: Win32
@@ -82,7 +80,6 @@ library
     include-dirs:     clap/include,
                       cbits
     c-sources:        cbits/helper.c
-    extra-libraries:  portaudio
     ghc-options:      -Wall
     
 executable clap-exe

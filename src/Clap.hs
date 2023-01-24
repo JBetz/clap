@@ -1,6 +1,5 @@
 module Clap 
-    ( module Engine
-    , module Extension
+    ( module Extension
     , HostConfig (..)
     , ClapVersion (..)
     , hostClapVersion
@@ -8,7 +7,6 @@ module Clap
     , pluginLibraryPaths
     ) where
 
-import Clap.Engine as Engine
 import Clap.Extension as Extension
 import Clap.Interface.Host (HostConfig (..)) 
 import Clap.Interface.Version as Version
