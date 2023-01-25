@@ -4,8 +4,6 @@ import Clap.Interface.Foreign.Plugin
 import Clap.Interface.PluginFeatures
 import Clap.Interface.Process
 import Clap.Interface.Version
-import Data.Int
-import Data.Map
 import Data.Word
 import Foreign.C.String
 import Foreign.C.Types
@@ -32,7 +30,7 @@ data PluginDescriptor = PluginDescriptor
 fromStruct :: C'clap_plugin_descriptor -> IO PluginDescriptor
 fromStruct struct = do 
     let clapVersion = Clap.Interface.Version.fromStruct (c'clap_plugin_descriptor'clap_version struct)
-    id <- peekCString (c'clap_plugin_descriptor'id struct)
+    id' <- peekCString (c'clap_plugin_descriptor'id struct)
     name <- peekCString (c'clap_plugin_descriptor'name struct)
     vendor <- peekCString (c'clap_plugin_descriptor'vendor struct)
     url <- peekCString (c'clap_plugin_descriptor'url struct)
@@ -44,7 +42,7 @@ fromStruct struct = do
     features <- traverse (fmap read . peekCString) featuresC
     pure $ PluginDescriptor 
         { pluginDescriptor_clapVersion = clapVersion
-        , pluginDescriptor_id = id
+        , pluginDescriptor_id = id'
         , pluginDescriptor_name = name
         , pluginDescriptor_vendor = vendor
         , pluginDescriptor_url = url
