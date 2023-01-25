@@ -17,11 +17,13 @@ import Control.Exception
 import Control.Monad
 import Control.Monad.Extra
 import Data.Foldable (for_)
+import Data.Traversable (for)
 import Data.Int
 import Data.Word
 import Data.IORef
 import Data.Map (Map)
 import qualified Data.Map as Map
+import Foreign.C.Types
 import Foreign.Ptr
 
 data ThreadType 
@@ -170,10 +172,10 @@ deactivateAll host = do
     plugins <- readIORef (pluginHost_plugins host) 
     for_ (Map.keys plugins) $ deactivate host
     
-processAll :: PluginHost -> IO ()
+processAll :: PluginHost -> IO [[[CFloat]]]
 processAll host = do
     plugins <- readIORef (pluginHost_plugins host)
-    for_ (Map.elems plugins) process
+    for (Map.elems plugins) process
 
 processBeginAll :: PluginHost -> Word64 -> Int64 -> IO ()
 processBeginAll host framesCount steadyTime = do
@@ -192,7 +194,7 @@ processEvent host clapId eventConfig event = do
     plugin <- getPlugin host clapId
     push (plugin_events plugin) eventConfig event
 
-process :: Plugin -> IO ()
+process :: Plugin -> IO [[CFloat]]
 process plugin = do
     let process' = plugin_process plugin
     setTransport process' nullPtr
@@ -203,13 +205,15 @@ process plugin = do
     setAudioOutputs process' (plugin_audioOut plugin)
     setAudioOutputsCount process' 1
     whenM (isPluginSleeping plugin) $ do
-        isStarted <- Plugin.startProcessing (plugin_handle plugin)
+        !isStarted <- Plugin.startProcessing (plugin_handle plugin)
         setState plugin $ if isStarted 
             then ActiveAndProcessing
             else ActiveWithError
     whenM (isPluginProcessing plugin) $ do
         !status <- Plugin.process (plugin_handle plugin) process'
         setProcessStatus plugin status
+    frameCount <- getFrameCount process'
+    getBufferData32 (plugin_audioOut plugin) frameCount
 
 processEnd :: Plugin -> Word64 -> Int64 -> IO ()
 processEnd plugin numberOfFrames steadyTime = do
