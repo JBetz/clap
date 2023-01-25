@@ -34,12 +34,6 @@ data PluginHost = PluginHost
     { pluginHost_handle :: HostHandle
     , pluginHost_plugins :: IORef (Map ClapId Plugin)
     , pluginHost_threadType :: IORef ThreadType
-    , pluginHost_process :: ProcessHandle
-    , pluginHost_audioIn :: AudioBufferHandle
-    , pluginHost_audioOut :: AudioBufferHandle
-    , pluginHost_events :: IORef [EventHandle]
-    , pluginHost_inputEvents :: InputEventsHandle
-    , pluginHost_outputEvents :: OutputEventsHandle
     , pluginHost_extensions :: HostExtensions
     }
 
@@ -62,7 +56,13 @@ data Plugin = Plugin
     , plugin_descriptor :: PluginDescriptor
     , plugin_handle :: PluginHandle
     , plugin_state :: IORef PluginState
+    , plugin_events :: IORef [EventHandle]
+    , plugin_inputEvents :: InputEventsHandle
+    , plugin_outputEvents :: OutputEventsHandle
     , plugin_processStatus :: IORef (Maybe ProcessStatus)
+    , plugin_process :: ProcessHandle
+    , plugin_audioIn :: AudioBufferHandle
+    , plugin_audioOut :: AudioBufferHandle
     }
 
 data PluginException
@@ -87,22 +87,10 @@ createPluginHost hostConfig = do
     hostHandle <- Host.createHost $ hostConfig { hostConfig_getExtension = \_ name -> Clap.Extension.getExtension extensions name }
     plugins <- newIORef mempty
     threadType <- newIORef Unknown
-    process' <- createProcess
-    audioIn <- createAudioBuffer
-    audioOut <- createAudioBuffer
-    events <- newIORef []
-    inputEvents <- createInputEvents events
-    outputEvents <- createOutputEvents
     pure $ PluginHost
         { pluginHost_handle = hostHandle 
         , pluginHost_plugins = plugins
         , pluginHost_threadType = threadType
-        , pluginHost_process = process'
-        , pluginHost_audioIn = audioIn
-        , pluginHost_audioOut = audioOut
-        , pluginHost_events = events
-        , pluginHost_inputEvents = inputEvents
-        , pluginHost_outputEvents = outputEvents
         , pluginHost_extensions = extensions
         }
 
@@ -130,6 +118,12 @@ load host (ClapId (filePath, index)) = do
                         unless isPluginInitialized $ throw PluginInitializationFailed
                         state <- newIORef Inactive
                         processStatus <- newIORef Nothing
+                        events <- newIORef []
+                        inputEvents <- createInputEvents events
+                        outputEvents <- createOutputEvents
+                        process' <- createProcess
+                        audioIn <- createAudioBuffer
+                        audioOut <- createAudioBuffer
                         addPlugin (ClapId (filePath, index)) $ Plugin
                             { plugin_library = library
                             , plugin_entry = entry
@@ -138,6 +132,12 @@ load host (ClapId (filePath, index)) = do
                             , plugin_handle = pluginHandle
                             , plugin_state = state
                             , plugin_processStatus = processStatus
+                            , plugin_events = events
+                            , plugin_inputEvents = inputEvents
+                            , plugin_outputEvents = outputEvents
+                            , plugin_process = process'
+                            , plugin_audioIn = audioIn
+                            , plugin_audioOut = audioOut
                             }
     where        
         addPlugin :: ClapId -> Plugin -> IO ()
@@ -169,43 +169,49 @@ deactivateAll :: PluginHost -> IO ()
 deactivateAll host = do
     plugins <- readIORef (pluginHost_plugins host) 
     for_ (Map.keys plugins) $ deactivate host
-
-processBegin :: PluginHost -> Word64 -> Int64 -> IO ()
-processBegin host framesCount steadyTime = do
+    
+processAll :: PluginHost -> Word64 -> Int64 -> IO ()
+processAll host framesCount steadyTime = do
     setThreadType host AudioThread
-    let process' = pluginHost_process host
+    plugins <- readIORef (pluginHost_plugins host)
+    for_ (Map.elems plugins) $ \plugin -> do
+        processBegin plugin framesCount steadyTime
+        process plugin
+    setThreadType host Unknown
+
+processBegin :: Plugin -> Word64 -> Int64 -> IO ()
+processBegin plugin framesCount steadyTime = do
+    let process' = plugin_process plugin
     setFramesCount process' framesCount
     setSteadyTime process' steadyTime
-    
+
 processEvent :: PluginHost -> ClapId -> EventConfig -> Event -> IO ()
-processEvent host _clapId eventConfig event =
-    push (pluginHost_events host) eventConfig event
+processEvent host clapId eventConfig event = do
+    plugin <- getPlugin host clapId
+    push (plugin_events plugin) eventConfig event
 
-process :: PluginHost -> IO ()
-process host = do
-    let process' = pluginHost_process host
+process :: Plugin -> IO ()
+process plugin = do
+    let process' = plugin_process plugin
     setTransport process' nullPtr
-    setInputEvents process' (pluginHost_inputEvents host)
-    setOutputEvents process' (pluginHost_outputEvents host)
-    setAudioInputs process' (pluginHost_audioIn host)
+    setInputEvents process' (plugin_inputEvents plugin)
+    setOutputEvents process' (plugin_outputEvents plugin)
+    setAudioInputs process' (plugin_audioIn plugin)
     setAudioInputsCount process' 1
-    setAudioOutputs process' (pluginHost_audioOut host)
+    setAudioOutputs process' (plugin_audioOut plugin)
     setAudioOutputsCount process' 1
-    plugins <- readIORef $ pluginHost_plugins host
-    for_ (Map.elems plugins) $ \plugin -> do 
-        whenM (isPluginSleeping plugin) $ do
-            isStarted <- Plugin.startProcessing (plugin_handle plugin)
-            setState plugin $ if isStarted 
-                then ActiveAndProcessing
-                else ActiveWithError
-        whenM (isPluginProcessing plugin) $ do
-            !status <- Plugin.process (plugin_handle plugin) process'
-            setProcessStatus plugin status
+    whenM (isPluginSleeping plugin) $ do
+        isStarted <- Plugin.startProcessing (plugin_handle plugin)
+        setState plugin $ if isStarted 
+            then ActiveAndProcessing
+            else ActiveWithError
+    whenM (isPluginProcessing plugin) $ do
+        !status <- Plugin.process (plugin_handle plugin) process'
+        setProcessStatus plugin status
 
-processEnd :: PluginHost -> Word64 -> Int64 -> IO ()
-processEnd host numberOfFrames steadyTime = do
-    setThreadType host Unknown
-    let process' = pluginHost_process host
+processEnd :: Plugin -> Word64 -> Int64 -> IO ()
+processEnd plugin numberOfFrames steadyTime = do
+    let process' = plugin_process plugin
     setFramesCount process' numberOfFrames
     setSteadyTime process' steadyTime
 
@@ -215,17 +221,21 @@ setThreadType host =
 
 setPorts :: PluginHost -> BufferData t -> BufferData t -> IO ()
 setPorts host inputs outputs = do
-    let audioIn = pluginHost_audioIn host
-    setChannelCount audioIn 2
-    setBufferData audioIn inputs
-    setConstantMask audioIn 0
-    setLatency audioIn 0
-    
-    let audioOut = pluginHost_audioOut host
-    setChannelCount audioOut 2
-    setBufferData audioOut outputs
-    setConstantMask audioOut 0
-    setLatency audioOut 0
+    plugins <- readIORef (pluginHost_plugins host)
+    for_ (Map.elems plugins) setPluginPorts
+    where 
+        setPluginPorts plugin = do
+            let audioIn = plugin_audioIn plugin
+            setChannelCount audioIn 2
+            setBufferData audioIn inputs
+            setConstantMask audioIn 0
+            setLatency audioIn 0
+            
+            let audioOut = plugin_audioOut plugin
+            setChannelCount audioOut 2
+            setBufferData audioOut outputs
+            setConstantMask audioOut 0
+            setLatency audioOut 0
 
 getPlugin :: PluginHost -> ClapId -> IO Plugin
 getPlugin host clapId = do
