@@ -29,11 +29,12 @@ import System.FilePath
 import System.IO.Unsafe (unsafeInterleaveIO)
 
 
-withPluginLibrary :: FilePath -> (PluginLibrary -> IO ()) -> IO ()
+withPluginLibrary :: FilePath -> (PluginLibrary -> IO a) -> IO a
 withPluginLibrary filePath f = do
     pluginLibrary <- openPluginLibrary filePath
-    f pluginLibrary
+    result <- f pluginLibrary
     closePluginLibrary pluginLibrary
+    pure result
 
 scanForPlugins :: IO [PluginDescriptor]
 scanForPlugins = do
@@ -50,13 +51,13 @@ scanForPluginsIn directories = do
                 pure $ (\path -> directory </> path) <$> paths
             else pure []
         ) directories
-    descriptors <- for (join paths) $ \filePath -> do
-        library <- openPluginLibrary filePath
-        entry <- lookupPluginEntry library
-        maybeFactory <- getFactory entry pluginFactoryId
-        case maybeFactory of
-            Just factory -> getPluginDescriptor factory 0
-            Nothing -> pure Nothing
+    descriptors <- for (join paths) $ \filePath -> 
+        withPluginLibrary filePath $ \library -> do 
+            entry <- lookupPluginEntry library
+            maybeFactory <- getFactory entry pluginFactoryId
+            case maybeFactory of
+                Just factory -> getPluginDescriptor factory 0
+                Nothing -> pure Nothing
     pure $ catMaybes descriptors
 
 findFilesWithExtension :: String -> FilePath -> IO [FilePath]
