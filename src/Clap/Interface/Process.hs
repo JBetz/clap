@@ -33,6 +33,10 @@ createProcess = new $ C'clap_process
     , c'clap_process'out_events = nullPtr
     }
  
+getFrameCount :: ProcessHandle -> IO Word64
+getFrameCount process =
+    fromIntegral <$> peek (p'clap_process'frames_count process)
+
 setSteadyTime :: ProcessHandle -> Int64 -> IO ()
 setSteadyTime process =
     poke (p'clap_process'steady_time process) . fromIntegral
