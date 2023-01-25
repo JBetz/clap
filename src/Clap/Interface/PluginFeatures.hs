@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Clap.Interface.PluginFeatures where
 
 import Text.Read
@@ -55,39 +57,48 @@ data PluginFeature
 
 instance Read PluginFeature where
     readPrec = do
-        Ident string <- lexP
-        case string of
-            "instrument" -> pure Instrument
-            "audio-effect" -> pure AudioEffect
-            "note-effect" -> pure NoteEffect
-            "analyzer" -> pure Analyzer
-            "synthesizer" -> pure Synthesizer
-            "sampler" -> pure Sampler
-            "drum" -> pure Drum
-            "drum-machine" -> pure DrumMachine
-            "filter" -> pure Filter
-            "phaser" -> pure Phaser
-            "equalizer" -> pure Equalizer
-            "de-esser" -> pure DeEsser
-            "phase-vocoder" -> pure PhaseVocoder
-            "granular" -> pure Granular
-            "frequency-shifter" -> pure FrequencyShifter
-            "pitch-shifter" -> pure PitchShifter
-            "distortion" -> pure Distortion
-            "transient-shaper" -> pure TransientShaper
-            "compressor" -> pure Compressor
-            "limiter" -> pure Limiter
-            "flanger" -> pure Flanger
-            "chorus" -> pure Chorus
-            "delay" -> pure Delay
-            "reverb" -> pure Reverb
-            "tremolo" -> pure Tremolo
-            "glitch" -> pure Glitch
-            "utility" -> pure Utility
-            "pitch-correction" -> pure PitchCorrection
-            "restoration" -> pure Restoration
-            "multi-effects" -> pure MultiEffects
-            "mixing" -> pure Mixing
-            "mastering" -> pure Mastering
-            other -> pure $ Other other
+        lexeme <- lexP
+        pure $ case lexeme of
+          Char char -> readString [char]
+          String string -> readString string
+          Punc string -> readString string
+          Ident string -> readString string
+          Symbol string -> readString string
+          Number number -> readString $ show number
+          EOF -> Other ""
+        where
+            readString = \case       
+                "instrument" -> Instrument
+                "audio-effect" -> AudioEffect
+                "note-effect" -> NoteEffect
+                "analyzer" -> Analyzer
+                "synthesizer" -> Synthesizer
+                "sampler" -> Sampler
+                "drum" -> Drum
+                "drum-machine" -> DrumMachine
+                "filter" -> Filter
+                "phaser" -> Phaser
+                "equalizer" -> Equalizer
+                "de-esser" -> DeEsser
+                "phase-vocoder" -> PhaseVocoder
+                "granular" -> Granular
+                "frequency-shifter" -> FrequencyShifter
+                "pitch-shifter" -> PitchShifter
+                "distortion" -> Distortion
+                "transient-shaper" -> TransientShaper
+                "compressor" -> Compressor
+                "limiter" -> Limiter
+                "flanger" -> Flanger
+                "chorus" -> Chorus
+                "delay" -> Delay
+                "reverb" -> Reverb
+                "tremolo" -> Tremolo
+                "glitch" -> Glitch
+                "utility" -> Utility
+                "pitch-correction" -> PitchCorrection
+                "restoration" -> Restoration
+                "multi-effects" -> MultiEffects
+                "mixing" -> Mixing
+                "mastering" -> Mastering
+                other -> Other other
     readListPrec = readListPrecDefault
