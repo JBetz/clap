@@ -1,7 +1,6 @@
 module Clap.Interface.Plugin where
 
 import Clap.Interface.Foreign.Plugin
-import Clap.Interface.PluginFeatures
 import Clap.Interface.Process
 import Clap.Interface.Version
 import Data.Word
@@ -89,9 +88,9 @@ reset plugin = do
     mK'reset funPtr plugin
 
 process :: PluginHandle -> ProcessHandle -> IO ProcessStatus
-process plugin process = do
+process plugin process' = do
     funPtr <- peek $ p'clap_plugin'process plugin
-    pure $ toEnum $ fromIntegral $ mK'process funPtr plugin process
+    pure $ toEnum $ fromIntegral $ mK'process funPtr plugin process'
 
 getExtension :: PluginHandle -> String -> IO (Maybe (Ptr ()))
 getExtension plugin name = do

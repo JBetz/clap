@@ -54,7 +54,7 @@ scanForPluginsIn directories = do
     descriptors <- for (join paths) $ \filePath -> 
         withPluginLibrary filePath $ \library -> do 
             entry <- lookupPluginEntry library
-            maybeFactory <- getFactory entry pluginFactoryId
+            maybeFactory <- getFactory entry clapPluginFactoryId
             case maybeFactory of
                 Just factory -> getPluginDescriptor factory 0
                 Nothing -> pure Nothing

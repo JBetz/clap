@@ -4,7 +4,6 @@ module Clap.Interface.Extension.Gui where
 
 import Clap.Interface.Plugin
 import Clap.Interface.Extension.Foreign.Gui
-import Data.Char
 import Foreign.Ptr
 import Foreign.Storable
 import Foreign.C.String

@@ -4,9 +4,7 @@ module Clap.Interface.Entry where
 
 import Clap.Interface.Foreign.Entry
 import Clap.Interface.PluginFactory
-import Clap.Interface.Foreign
 import Foreign.C.String
-import Foreign.Marshal.Alloc
 import Foreign.Marshal.Utils
 import Foreign.Ptr
 import Foreign.Storable

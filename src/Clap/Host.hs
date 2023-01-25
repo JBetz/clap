@@ -103,7 +103,7 @@ load host (ClapId (filePath, index)) = do
     entry <- lookupPluginEntry library
     isEntryInitialized <- Entry.init entry filePath
     unless isEntryInitialized $ throw EntryInitializationFailed
-    maybeFactory <- getFactory entry pluginFactoryId
+    maybeFactory <- getFactory entry clapPluginFactoryId
     whenJust maybeFactory $ \factory -> do
         count <- getPluginCount factory
         when (index > count) $ throw InvalidIndex

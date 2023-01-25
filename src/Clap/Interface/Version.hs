@@ -1,12 +1,7 @@
 module Clap.Interface.Version where
 
-import Clap.Interface.Foreign
 import Clap.Interface.Foreign.Version
-import Data.Int
 import Data.Word
-import Foreign.Marshal.Utils
-import Foreign.Ptr
-import Foreign.Storable
 
 data ClapVersion = ClapVersion
     { clapVersion_major :: Word32
@@ -22,7 +17,7 @@ hostClapVersion = ClapVersion
     }
 
 clapVersionIsCompatible :: ClapVersion -> Bool
-clapVersionIsCompatible (ClapVersion major minor revision) = major >= 1
+clapVersionIsCompatible (ClapVersion major _minor _revision) = major >= 1
 
 fromStruct :: C'clap_version -> ClapVersion
 fromStruct (C'clap_version major minor revision) = ClapVersion

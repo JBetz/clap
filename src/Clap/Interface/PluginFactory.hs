@@ -8,8 +8,8 @@ import Foreign.C.String
 import Foreign.Ptr
 import Foreign.Storable
 
-pluginFactoryId :: String
-pluginFactoryId = "clap.plugin-factory"
+clapPluginFactoryId :: String
+clapPluginFactoryId = "clap.plugin-factory"
 
 type PluginFactoryHandle = Ptr C'clap_plugin_factory
 
