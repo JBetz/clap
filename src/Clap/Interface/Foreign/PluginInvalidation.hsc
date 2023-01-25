@@ -1,6 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 #include <bindings.dsl.h>
 #include <clap/plugin-invalidation.h>
+#include <helper.c>
 module Clap.Interface.Foreign.PluginInvalidation where
 import Foreign.Ptr
 #strict_import
