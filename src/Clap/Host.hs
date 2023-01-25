@@ -170,14 +170,16 @@ deactivateAll host = do
     plugins <- readIORef (pluginHost_plugins host) 
     for_ (Map.keys plugins) $ deactivate host
     
-processAll :: PluginHost -> Word64 -> Int64 -> IO ()
-processAll host framesCount steadyTime = do
+processAll :: PluginHost -> IO ()
+processAll host = do
+    plugins <- readIORef (pluginHost_plugins host)
+    for_ (Map.elems plugins) process
+
+processBeginAll :: PluginHost -> Word64 -> Int64 -> IO ()
+processBeginAll host framesCount steadyTime = do
     setThreadType host AudioThread
     plugins <- readIORef (pluginHost_plugins host)
-    for_ (Map.elems plugins) $ \plugin -> do
-        processBegin plugin framesCount steadyTime
-        process plugin
-    setThreadType host Unknown
+    for_ (Map.elems plugins) $ \plugin -> processBegin plugin framesCount steadyTime
 
 processBegin :: Plugin -> Word64 -> Int64 -> IO ()
 processBegin plugin framesCount steadyTime = do
@@ -219,23 +221,19 @@ setThreadType :: PluginHost -> ThreadType -> IO ()
 setThreadType host =
     writeIORef (pluginHost_threadType host)
 
-setPorts :: PluginHost -> BufferData t -> BufferData t -> IO ()
-setPorts host inputs outputs = do
-    plugins <- readIORef (pluginHost_plugins host)
-    for_ (Map.elems plugins) setPluginPorts
-    where 
-        setPluginPorts plugin = do
-            let audioIn = plugin_audioIn plugin
-            setChannelCount audioIn 2
-            setBufferData audioIn inputs
-            setConstantMask audioIn 0
-            setLatency audioIn 0
-            
-            let audioOut = plugin_audioOut plugin
-            setChannelCount audioOut 2
-            setBufferData audioOut outputs
-            setConstantMask audioOut 0
-            setLatency audioOut 0
+setPorts :: Plugin -> BufferData t -> BufferData t -> IO ()
+setPorts plugin inputs outputs = do
+    let audioIn = plugin_audioIn plugin
+    setChannelCount audioIn 2
+    setBufferData audioIn inputs
+    setConstantMask audioIn 0
+    setLatency audioIn 0
+    
+    let audioOut = plugin_audioOut plugin
+    setChannelCount audioOut 2
+    setBufferData audioOut outputs
+    setConstantMask audioOut 0
+    setLatency audioOut 0
 
 getPlugin :: PluginHost -> ClapId -> IO Plugin
 getPlugin host clapId = do
