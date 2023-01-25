@@ -15,6 +15,7 @@ import Foreign.Ptr
 #field revision , CUInt
 #stoptype
 #synonym_t clap_version_t , <struct clap_version>
+clapVersionMajor, clapVersionMinor, clapVersionRevision :: CUInt
 clapVersionMajor = #const CLAP_VERSION_MAJOR
 clapVersionMinor = #const CLAP_VERSION_MINOR
 clapVersionRevision = #const CLAP_VERSION_REVISION
