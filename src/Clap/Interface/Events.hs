@@ -33,6 +33,13 @@ data EventConfig = EventConfig
     , eventConfig_flags :: [EventFlag] 
     } deriving (Show)
 
+defaultEventConfig :: EventConfig 
+defaultEventConfig = EventConfig
+    { eventConfig_time = 0
+    , eventConfig_spaceId = coreEventSpaceId
+    , eventConfig_flags = [] 
+    }
+
 data Event
     = NoteOn NoteEvent
     | NoteOff NoteEvent
@@ -77,7 +84,7 @@ data NoteKillEvent = NoteKillEvent
     { noteKillEvent_noteId :: Int32
     , noteKillEvent_portIndex :: Int16
     , noteKillEvent_channel :: Int16
-    , noteKillEvent_key :: Word16
+    , noteKillEvent_key :: Int16
     } deriving (Show)
 
 data NoteExpression
