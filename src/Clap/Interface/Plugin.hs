@@ -24,7 +24,7 @@ data PluginDescriptor = PluginDescriptor
     , pluginDescriptor_supportUrl :: String
     , pluginDescriptor_version :: String
     , pluginDescriptor_description :: String
-    , pluginDescriptor_features :: [PluginFeature]
+    , pluginDescriptor_features :: [String]
     } deriving (Eq, Show)
 
 fromStruct :: C'clap_plugin_descriptor -> IO PluginDescriptor
@@ -39,7 +39,7 @@ fromStruct struct = do
     version <- peekCString (c'clap_plugin_descriptor'version struct)
     description <- peekCString (c'clap_plugin_descriptor'description struct)
     featuresC <- peekArray0 nullPtr (c'clap_plugin_descriptor'features struct)
-    features <- traverse (fmap read . peekCString) featuresC
+    features <- traverse peekCString featuresC
     pure $ PluginDescriptor 
         { pluginDescriptor_clapVersion = clapVersion
         , pluginDescriptor_id = id'
