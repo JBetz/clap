@@ -37,7 +37,7 @@ createWindow api handle = do
     cApi <- newCString $ Prelude.show api
     new $ C'clap_window
         { c'clap_window'api = cApi
-        , c'clap_window'handle = handle
+       -- , c'clap_window'handle = handle
         }
     
 isApiSupported :: PluginGuiHandle -> PluginHandle -> WindowAPI -> Bool -> IO Bool
