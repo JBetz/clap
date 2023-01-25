@@ -8,7 +8,7 @@ import Foreign.Ptr
 import Clap.Interface.Foreign.Host
 import Clap.Interface.Foreign.Plugin
 import Clap.Interface.StringSizes
-#globalarray CLAP_EXT_NOTE_PORTS , CChar
+-- #globalarray CLAP_EXT_NOTE_PORTS , CChar
 {- enum clap_note_dialect {
     CLAP_NOTE_DIALECT_CLAP = 1 << 0,
     CLAP_NOTE_DIALECT_MIDI = 1 << 1,

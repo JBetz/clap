@@ -6,7 +6,7 @@ import Foreign.Ptr
 #strict_import
 
 import Clap.Interface.Extension.Foreign....Plugin
-#globalarray CLAP_EXT_THREAD_POOL , CChar
+-- #globalarray CLAP_EXT_THREAD_POOL , CChar
 {- typedef struct clap_plugin_thread_pool {
             void (* exec)(const clap_plugin_t * plugin, uint32_t task_index);
         } clap_plugin_thread_pool_t; -}

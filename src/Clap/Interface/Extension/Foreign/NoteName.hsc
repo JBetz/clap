@@ -7,7 +7,7 @@ import Foreign.Ptr
 
 import Clap.Interface.Extension.Foreign....Plugin
 import Clap.Interface.Extension.Foreign....StringSizes
-#globalarray CLAP_EXT_NOTE_NAME , CChar
+-- #globalarray CLAP_EXT_NOTE_NAME , CChar
 {- typedef struct clap_note_name {
             char name[CLAP_NAME_SIZE];
             int16_t port;

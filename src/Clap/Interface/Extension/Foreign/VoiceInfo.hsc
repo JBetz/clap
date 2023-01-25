@@ -6,7 +6,7 @@ import Foreign.Ptr
 #strict_import
 
 import Clap.Interface.Extension.Foreign....Plugin
-#globalarray CLAP_EXT_VOICE_INFO , CChar
+-- #globalarray CLAP_EXT_VOICE_INFO , CChar
 {- enum {
     CLAP_VOICE_INFO_SUPPORTS_OVERLAPPING_NOTES = 1 << 0
 }; -}

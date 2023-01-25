@@ -7,7 +7,7 @@ import Foreign.Ptr
 
 import Clap.Interface.Foreign.Host
 import Clap.Interface.Foreign.Plugin
-#globalarray CLAP_EXT_TAIL , CChar
+-- #globalarray CLAP_EXT_TAIL , CChar
 {- typedef struct clap_plugin_tail {
             uint32_t (* get)(const clap_plugin_t * plugin);
         } clap_plugin_tail_t; -}

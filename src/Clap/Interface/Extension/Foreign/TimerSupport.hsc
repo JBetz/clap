@@ -6,7 +6,7 @@ import Foreign.Ptr
 #strict_import
 
 import Clap.Interface.Extension.Foreign....Plugin
-#globalarray CLAP_EXT_TIMER_SUPPORT , CChar
+-- #globalarray CLAP_EXT_TIMER_SUPPORT , CChar
 {- typedef struct clap_plugin_timer_support {
             void (* on_timer)(const clap_plugin_t * plugin, clap_id timer_id);
         } clap_plugin_timer_support_t; -}

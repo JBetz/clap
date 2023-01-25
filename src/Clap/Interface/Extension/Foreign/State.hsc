@@ -8,7 +8,7 @@ import Foreign.Ptr
 import Clap.Interface.Foreign.Host
 import Clap.Interface.Foreign.Plugin
 import Clap.Interface.Foreign.Stream
-#globalarray CLAP_EXT_STATE , CChar
+-- #globalarray CLAP_EXT_STATE , CChar
 {- typedef struct clap_plugin_state {
             _Bool (* save)(const clap_plugin_t * plugin,
                            const clap_ostream_t * stream);

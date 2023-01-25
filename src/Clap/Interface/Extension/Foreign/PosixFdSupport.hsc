@@ -6,7 +6,7 @@ import Foreign.Ptr
 #strict_import
 
 import Clap.Interface.Extension.Foreign....Plugin
-#globalarray CLAP_EXT_POSIX_FD_SUPPORT , CChar
+-- #globalarray CLAP_EXT_POSIX_FD_SUPPORT , CChar
 {- enum {
     CLAP_POSIX_FD_READ = 1 << 0,
     CLAP_POSIX_FD_WRITE = 1 << 1,

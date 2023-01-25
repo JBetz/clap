@@ -7,7 +7,7 @@ import Foreign.Ptr
 
 import Clap.Interface.Foreign.Host
 import Clap.Interface.Foreign.Plugin
-#globalarray CLAP_EXT_THREAD_CHECK , CChar
+-- #globalarray CLAP_EXT_THREAD_CHECK , CChar
 {- typedef struct clap_host_thread_check {
             _Bool (* is_main_thread)(const clap_host_t * host);
             _Bool (* is_audio_thread)(const clap_host_t * host);

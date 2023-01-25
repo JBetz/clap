@@ -8,7 +8,7 @@ import Foreign.Ptr
 import Clap.Interface.Foreign.Events
 import Clap.Interface.Foreign.Host
 import Clap.Interface.Foreign.Plugin
-#globalarray CLAP_EXT_PARAMS , CChar
+-- #globalarray CLAP_EXT_PARAMS , CChar
 {- enum {
     CLAP_PARAM_IS_STEPPED = 1 << 0,
     CLAP_PARAM_IS_PERIODIC = 1 << 1,
