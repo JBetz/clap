@@ -104,6 +104,7 @@ library
                     , clap/ext/state.h
                     , clap/ext/tail.h
                     , clap/ext/thread-check.h
+    install-includes: clap/audio-buffer.h
     c-sources:        cbits/helper.c
     ghc-options:      -Wall
     
