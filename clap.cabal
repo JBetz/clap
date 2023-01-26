@@ -88,4 +88,3 @@ executable clap-exe
                       clap
     hs-source-dirs:   app
     default-language: Haskell2010
-    include-dirs:     clap/include
