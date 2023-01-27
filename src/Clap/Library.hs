@@ -48,7 +48,7 @@ scanForPluginsIn directories = do
         if exists 
             then do
                 paths <- findFilesWithExtension "clap" directory
-                pure $ (\path -> directory </> path) <$> paths
+                pure $ (directory </>) <$> paths
             else pure []
         ) directories
     descriptors <- for (join paths) $ \filePath -> 
