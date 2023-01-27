@@ -62,7 +62,6 @@ library
                       Clap.Interface.Extension.Foreign.Tail,
                       Clap.Interface.Extension.Foreign.ThreadCheck
     build-depends:    base,
-                      bindings-DSL,
                       containers,
                       directory,
                       extra,
