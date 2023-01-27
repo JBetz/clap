@@ -17,12 +17,12 @@ import Control.Exception
 import Control.Monad
 import Control.Monad.Extra
 import Data.Foldable (for_)
-import Data.Traversable (for)
 import Data.Int
 import Data.Word
 import Data.IORef
 import Data.Map (Map)
 import qualified Data.Map as Map
+import Data.Traversable (for)
 import Foreign.C.Types
 import Foreign.Ptr
 
@@ -146,36 +146,29 @@ load host (ClapId (filePath, index)) = do
         addPlugin key plugin =
             modifyIORef' (pluginHost_plugins host) $ Map.insert key plugin
 
-activate :: PluginHost -> ClapId -> Double -> Word32 -> IO ()
-activate host clapId sampleRate blockSize = do
-    plugin <- getPlugin host clapId
+activate :: Plugin -> Double -> Word32 -> IO ()
+activate plugin sampleRate blockSize = do
     isActivated <- Plugin.activate (plugin_handle plugin) sampleRate blockSize blockSize
     setState plugin $ if isActivated 
         then ActiveAndSleeping
         else InactiveWithError 
 
 activateAll :: PluginHost -> Double -> Word32 -> IO ()
-activateAll host sampleRate blockSize = do
-    plugins <- readIORef (pluginHost_plugins host) 
-    for_ (Map.keys plugins) $ \clapId ->
-        activate host clapId sampleRate blockSize
+activateAll host sampleRate blockSize =
+    void $ forEachPlugin host $ \plugin -> 
+        activate plugin sampleRate blockSize
 
-deactivate :: PluginHost -> ClapId -> IO ()
-deactivate host clapId = do
-    plugin <- getPlugin host clapId 
+deactivate :: Plugin -> IO ()
+deactivate plugin =
     whenM (isPluginActive plugin) $ do 
         Plugin.deactivate (plugin_handle plugin)
         setState plugin Inactive
 
 deactivateAll :: PluginHost -> IO ()
-deactivateAll host = do
-    plugins <- readIORef (pluginHost_plugins host) 
-    for_ (Map.keys plugins) $ deactivate host
-    
-processAll :: PluginHost -> IO [[[CFloat]]]
-processAll host = do
-    plugins <- readIORef (pluginHost_plugins host)
-    for (Map.elems plugins) process
+deactivateAll host = void $ forEachPlugin host deactivate
+
+processAll :: PluginHost -> IO [PluginOutput]
+processAll host = forEachPlugin host process
 
 processBeginAll :: PluginHost -> Word64 -> Int64 -> IO ()
 processBeginAll host framesCount steadyTime = do
@@ -194,7 +187,7 @@ processEvent host clapId eventConfig event = do
     plugin <- getPlugin host clapId
     push (plugin_events plugin) eventConfig event
 
-process :: Plugin -> IO [[CFloat]]
+process :: Plugin -> IO PluginOutput
 process plugin = do
     let process' = plugin_process plugin
     setTransport process' nullPtr
@@ -212,8 +205,27 @@ process plugin = do
     whenM (isPluginProcessing plugin) $ do
         !status <- Plugin.process (plugin_handle plugin) process'
         setProcessStatus plugin status
+    getAudioOutput plugin
+
+forEachPlugin :: PluginHost -> (Plugin -> IO a) -> IO [a]
+forEachPlugin host f = do
+    plugins <- readIORef $ pluginHost_plugins host
+    for (Map.elems plugins) f
+
+data PluginOutput = PluginOutput
+    { pluginOutput_leftChannel :: [CFloat]
+    , pluginOutput_rightChannel :: [CFloat] 
+    }
+
+getAudioOutput :: Plugin -> IO PluginOutput
+getAudioOutput plugin = do
+    let process' = plugin_process plugin    
     frameCount <- getFrameCount process'
-    getBufferData32 (plugin_audioOut plugin) frameCount
+    [leftChannel, rightChannel] <- getBufferData32 (plugin_audioOut plugin) frameCount
+    pure $ PluginOutput
+        { pluginOutput_leftChannel = leftChannel
+        , pluginOutput_rightChannel = rightChannel
+        }
 
 processEnd :: Plugin -> Word64 -> Int64 -> IO ()
 processEnd plugin numberOfFrames steadyTime = do
