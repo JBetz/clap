@@ -2,7 +2,7 @@
 #include <clap/ext/gui.h>
 #include <clap/plugin-invalidation.h>
 
-char *array_CLAP_WINDOW_API_WIN_32 (void) {return CLAP_WINDOW_API_WIN32;}
+char *array_CLAP_WINDOW_API_WIN32 (void) {return CLAP_WINDOW_API_WIN32;}
 char *array_CLAP_WINDOW_API_COCOA (void) {return CLAP_WINDOW_API_COCOA;}
 char *array_CLAP_WINDOW_API_X11 (void) {return CLAP_WINDOW_API_X11;}
 char *array_CLAP_WINDOW_API_WAYLAND (void) {return CLAP_WINDOW_API_WAYLAND;}
