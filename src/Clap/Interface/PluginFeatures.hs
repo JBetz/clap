@@ -1,7 +1,11 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
 
 module Clap.Interface.PluginFeatures where
 
+import Data.Aeson hiding (String, Number)
+import GHC.Generics
 import Text.Read
 
 data PluginFeature
@@ -53,7 +57,7 @@ data PluginFeature
     | Ambisonic
 
     | Other String
-    deriving (Eq, Show)
+    deriving (Eq, Show, Generic, ToJSON, FromJSON)
 
 instance Read PluginFeature where
     readPrec = do

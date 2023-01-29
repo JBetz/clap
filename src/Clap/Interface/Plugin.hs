@@ -1,8 +1,12 @@
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveAnyClass #-}
+
 module Clap.Interface.Plugin where
 
 import Clap.Interface.Foreign.Plugin
 import Clap.Interface.Process
 import Clap.Interface.Version
+import Data.Aeson
 import Data.Word
 import Foreign.C.String
 import Foreign.C.Types
@@ -10,6 +14,7 @@ import Foreign.Marshal.Array
 import Foreign.Marshal.Utils
 import Foreign.Ptr
 import Foreign.Storable
+import GHC.Generics
 
 type PluginHandle = Ptr C'clap_plugin
 
@@ -24,7 +29,7 @@ data PluginDescriptor = PluginDescriptor
     , pluginDescriptor_version :: String
     , pluginDescriptor_description :: String
     , pluginDescriptor_features :: [String]
-    } deriving (Eq, Show)
+    } deriving (Eq, Show, Generic, ToJSON, FromJSON)
 
 fromStruct :: C'clap_plugin_descriptor -> IO PluginDescriptor
 fromStruct struct = do 
