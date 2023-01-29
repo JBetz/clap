@@ -62,7 +62,6 @@ library
                       Clap.Interface.Extension.Foreign.Tail,
                       Clap.Interface.Extension.Foreign.ThreadCheck
     build-depends:    base,
-                      aeson,
                       containers,
                       directory,
                       extra,

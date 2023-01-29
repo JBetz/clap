@@ -1,18 +1,13 @@
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveGeneric #-}
-
 module Clap.Interface.Version where
 
 import Clap.Interface.Foreign.Version
 import Data.Word
-import Data.Aeson 
-import GHC.Generics
 
 data ClapVersion = ClapVersion
     { clapVersion_major :: Word32
     , clapVersion_minor :: Word32
     , clapVersion_revision :: Word32
-    } deriving (Eq, Show, Generic, ToJSON, FromJSON)
+    } deriving (Eq, Show)
 
 hostClapVersion :: ClapVersion
 hostClapVersion = ClapVersion
