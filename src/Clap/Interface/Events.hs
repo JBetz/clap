@@ -179,9 +179,15 @@ data TransportEvent = TransportEvent
     , transportEvent_timeSignatureDenominator :: Word16
     } deriving (Show)
 
+data MidiData = MidiData
+    { midiData_first :: Word8
+    , midiData_second :: Word8
+    , midiData_third :: Word8 
+    } deriving (Show)
+
 data MidiEvent = MidiEvent
     { midiEvent_portIndex :: Word16
-    , midiEvent_data :: (Word8, Word8, Word8)
+    , midiEvent_data :: MidiData
     } deriving (Show)
 
 data MidiSysexEvent = MidiSysexEvent
@@ -189,9 +195,16 @@ data MidiSysexEvent = MidiSysexEvent
     , midiSysexEvent_buffer :: [Word8] 
     } deriving (Show)
 
+data Midi2Data = Midi2Data
+    { midi2Data_first :: Word32
+    , midi2Data_second :: Word32
+    , midi2Data_third :: Word32
+    , midi2Data_fourth :: Word32 
+    } deriving (Show)
+
 data Midi2Event = Midi2Event
     { midi2Event_portIndex :: Word16
-    , midi2Event_data :: (Word32, Word32, Word32, Word32)
+    , midi2Event_data :: Midi2Data
     } deriving (Show)
 
 type InputEventsHandle = Ptr C'clap_input_events
@@ -339,10 +352,10 @@ readEvent cEventHeader = do
             }
 
         midiEventFromStruct cMidi = 
-            let [one, two, three] = fromIntegral <$> c'clap_event_midi'data cMidi
+            let [first, second, third] = fromIntegral <$> c'clap_event_midi'data cMidi
             in MidiEvent 
                 { midiEvent_portIndex = fromIntegral $ c'clap_event_midi'port_index cMidi
-                , midiEvent_data = (one, two, three)
+                , midiEvent_data = MidiData first second third
                 }
 
         midiSysexEventFromStruct cMidiSysex = do
@@ -353,10 +366,10 @@ readEvent cEventHeader = do
                 }
             
         midi2EventFromStruct cMidi2 = 
-            let [one, two, three, four] = fromIntegral <$> c'clap_event_midi2'data cMidi2
+            let [first, second, third, fourth] = fromIntegral <$> c'clap_event_midi2'data cMidi2
             in Midi2Event 
                 { midi2Event_portIndex = fromIntegral $ c'clap_event_midi2'port_index cMidi2
-                , midi2Event_data = (one, two, three, four)
+                , midi2Event_data = Midi2Data first second third fourth
                 }
 
 
@@ -463,8 +476,8 @@ createEvent eventConfig event =
             { c'clap_event_midi'header = eventToHeader event (undefined :: C'clap_event_midi)
             , c'clap_event_midi'port_index = fromIntegral $ midiEvent_portIndex midi
             , c'clap_event_midi'data = 
-                let (one, two, three) = midiEvent_data midi
-                in fromIntegral <$> [one, two, three]
+                let MidiData first second third = midiEvent_data midi
+                in fromIntegral <$> [first, second, third]
             }
         midiSysexEventToStruct midiSysex = do
             cBuffer <- newArray $ CUChar <$> midiSysexEvent_buffer midiSysex
@@ -478,8 +491,8 @@ createEvent eventConfig event =
             { c'clap_event_midi2'header = eventToHeader event (undefined :: C'clap_event_midi2)
             , c'clap_event_midi2'port_index = fromIntegral $ midi2Event_portIndex midi2
             , c'clap_event_midi2'data = 
-                let (one, two, three, four) = midi2Event_data midi2
-                in fromIntegral <$> [one, two, three, four]
+                let Midi2Data first second third fourth = midi2Event_data midi2
+                in fromIntegral <$> [first, second, third, fourth]
             }
 
         eventToHeader event cEvent = C'clap_event_header 
