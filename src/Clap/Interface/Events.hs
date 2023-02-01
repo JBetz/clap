@@ -27,17 +27,17 @@ data EventFlag
     | DoNotRecord
     deriving (Enum, Bounded, Show)
 
-data EventConfig = EventConfig
-    { eventConfig_time :: Word32
-    , eventConfig_spaceId :: Word16
-    , eventConfig_flags :: [EventFlag] 
+data ClapEventConfig = ClapEventConfig
+    { clapEventConfig_time :: Word32
+    , clapEventConfig_spaceId :: Word16
+    , clapEventConfig_flags :: [EventFlag] 
     } deriving (Show)
 
-defaultEventConfig :: EventConfig 
-defaultEventConfig = EventConfig
-    { eventConfig_time = 0
-    , eventConfig_spaceId = coreEventSpaceId
-    , eventConfig_flags = [] 
+defaultClapEventConfig :: ClapEventConfig 
+defaultClapEventConfig = ClapEventConfig
+    { clapEventConfig_time = 0
+    , clapEventConfig_spaceId = coreEventSpaceId
+    , clapEventConfig_flags = [] 
     }
 
 data ClapEvent
@@ -225,7 +225,7 @@ size events _ = fromIntegral . length <$> readIORef events
 get :: IORef [EventHandle] -> InputEventsHandle -> CUInt -> IO (Ptr C'clap_event_header)
 get events _ index = (!! fromIntegral index) <$> readIORef events
 
-push :: IORef [EventHandle] -> EventConfig -> ClapEvent -> IO ()
+push :: IORef [EventHandle] -> ClapEventConfig -> ClapEvent -> IO ()
 push events eventConfig event = do
     newEvent <- createEvent eventConfig event
     modifyIORef' events (<> [newEvent]) 
@@ -389,7 +389,7 @@ tryPush outputEvents event = do
     funPtr <- peek $ p'clap_output_events'try_push outputEvents
     mK'try_push funPtr outputEvents event
 
-createEvent :: EventConfig -> ClapEvent -> IO (Ptr C'clap_event_header)
+createEvent :: ClapEventConfig -> ClapEvent -> IO (Ptr C'clap_event_header)
 createEvent eventConfig event = 
     case event of
         NoteOn noteOn -> castPtr <$> new (noteEventToStruct noteOn)
@@ -497,8 +497,8 @@ createEvent eventConfig event =
 
         eventToHeader event cEvent = C'clap_event_header 
             { c'clap_event_header'size = fromIntegral $ sizeOf cEvent
-            , c'clap_event_header'time = fromIntegral $ eventConfig_time eventConfig
-            , c'clap_event_header'space_id = fromIntegral $ eventConfig_spaceId eventConfig
+            , c'clap_event_header'time = fromIntegral $ clapEventConfig_time eventConfig
+            , c'clap_event_header'space_id = fromIntegral $ clapEventConfig_spaceId eventConfig
             , c'clap_event_header'type = fromIntegral $ eventToEnumValue event
-            , c'clap_event_header'flags = fromIntegral $ flagsToInt $ eventConfig_flags eventConfig
+            , c'clap_event_header'flags = fromIntegral $ flagsToInt $ clapEventConfig_flags eventConfig
             } 
