@@ -40,7 +40,7 @@ defaultEventConfig = EventConfig
     , eventConfig_flags = [] 
     }
 
-data Event
+data ClapEvent
     = NoteOn NoteEvent
     | NoteOff NoteEvent
     | NoteChoke NoteKillEvent
@@ -56,7 +56,7 @@ data Event
     | Midi2 Midi2Event
     deriving (Show)
 
-eventToEnumValue :: Event -> Int
+eventToEnumValue :: ClapEvent -> Int
 eventToEnumValue = \case
     NoteOn _ -> 0
     NoteOff _ -> 1
@@ -225,12 +225,12 @@ size events _ = fromIntegral . length <$> readIORef events
 get :: IORef [EventHandle] -> InputEventsHandle -> CUInt -> IO (Ptr C'clap_event_header)
 get events _ index = (!! fromIntegral index) <$> readIORef events
 
-push :: IORef [EventHandle] -> EventConfig -> Event -> IO ()
+push :: IORef [EventHandle] -> EventConfig -> ClapEvent -> IO ()
 push events eventConfig event = do
     newEvent <- createEvent eventConfig event
     modifyIORef' events (<> [newEvent]) 
 
-readEvent :: EventHandle -> IO (Maybe Event)
+readEvent :: EventHandle -> IO (Maybe ClapEvent)
 readEvent cEventHeader = do
     eventType <- peek $ p'clap_event_header'type cEventHeader
     case eventType of
@@ -389,7 +389,7 @@ tryPush outputEvents event = do
     funPtr <- peek $ p'clap_output_events'try_push outputEvents
     mK'try_push funPtr outputEvents event
 
-createEvent :: EventConfig -> Event -> IO (Ptr C'clap_event_header)
+createEvent :: EventConfig -> ClapEvent -> IO (Ptr C'clap_event_header)
 createEvent eventConfig event = 
     case event of
         NoteOn noteOn -> castPtr <$> new (noteEventToStruct noteOn)
