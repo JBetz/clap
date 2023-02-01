@@ -1,3 +1,4 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RankNTypes #-}
 
@@ -5,7 +6,6 @@ module Clap.Interface.Events where
 
 import Clap.Interface.Foreign
 import Clap.Interface.Foreign.Events
-import Clap.Interface.Id
 import Clap.Interface.Fixedpoint
 import Data.IORef
 import Data.Int
@@ -125,8 +125,11 @@ data NoteExpressionEvent = NoteExpressionEvent
     , noteExpressionEvent_value :: NoteExpression
     } deriving (Show)
 
+newtype ParamId = ParamId { paramId_id :: Int }
+    deriving (Show, Eq, Ord, Enum, Num, Real, Integral)
+
 data ParamValueEvent = ParamValueEvent
-    { paramValueEvent_paramId :: ClapId
+    { paramValueEvent_paramId :: ParamId
     , paramValueEvent_cookie :: Ptr ()
     , paramValueEvent_noteId :: Int32
     , paramValueEvent_portIndex :: Int16
@@ -136,7 +139,7 @@ data ParamValueEvent = ParamValueEvent
     } deriving (Show)
 
 data ParamModEvent = ParamModEvent
-    { paramModEvent_paramId :: ClapId
+    { paramModEvent_paramId :: ParamId
     , paramModEvent_cookie :: Ptr ()
     , paramModEvent_noteId :: Int32
     , paramModEvent_portIndex :: Int16
@@ -146,7 +149,7 @@ data ParamModEvent = ParamModEvent
     } deriving (Show)
 
 data ParamGestureEvent = ParamGestureEvent
-    { paramGestureEvent_paramId :: ClapId }
+    { paramGestureEvent_paramId :: ParamId }
     deriving (Show)
 
 data TransportFlag
@@ -296,7 +299,7 @@ readEvent cEventHeader = do
             }
 
         paramValueEventFromStruct cParamValue = ParamValueEvent 
-            { paramValueEvent_paramId = ClapId $ fromIntegral $ c'clap_event_param_value'param_id cParamValue
+            { paramValueEvent_paramId = fromIntegral $ c'clap_event_param_value'param_id cParamValue
             , paramValueEvent_cookie = c'clap_event_param_value'cookie cParamValue
             , paramValueEvent_noteId = fromIntegral $ c'clap_event_param_value'note_id cParamValue
             , paramValueEvent_portIndex = fromIntegral $ c'clap_event_param_value'port_index cParamValue
@@ -306,7 +309,7 @@ readEvent cEventHeader = do
             }
 
         paramModEventFromStruct cParamMod = ParamModEvent 
-            { paramModEvent_paramId = ClapId $ fromIntegral $ c'clap_event_param_mod'param_id cParamMod
+            { paramModEvent_paramId = fromIntegral $ c'clap_event_param_mod'param_id cParamMod
             , paramModEvent_cookie = c'clap_event_param_mod'cookie cParamMod
             , paramModEvent_noteId = fromIntegral $ c'clap_event_param_mod'note_id cParamMod
             , paramModEvent_portIndex = fromIntegral $ c'clap_event_param_mod'port_index cParamMod
@@ -317,7 +320,7 @@ readEvent cEventHeader = do
 
 
         paramGestureEventFromStruct cParamGesture = ParamGestureEvent 
-            { paramGestureEvent_paramId = ClapId $ fromIntegral $ c'clap_event_param_gesture'param_id cParamGesture }
+            { paramGestureEvent_paramId = fromIntegral $ c'clap_event_param_gesture'param_id cParamGesture }
 
         transportEventFromStruct cTransport = TransportEvent 
             { transportEvent_flags = intToFlags $ fromIntegral $ c'clap_event_transport'flags cTransport
@@ -418,7 +421,7 @@ createEvent eventConfig event =
             }
         paramValueEventToStruct paramValue = C'clap_event_param_value
             { c'clap_event_param_value'header = eventToHeader event (undefined :: C'clap_event_param_value)
-            , c'clap_event_param_value'param_id = fromIntegral $ unClapId $ paramValueEvent_paramId paramValue
+            , c'clap_event_param_value'param_id = fromIntegral $ paramValueEvent_paramId paramValue
             ,  c'clap_event_param_value'cookie = paramValueEvent_cookie paramValue
             , c'clap_event_param_value'note_id = fromIntegral $ paramValueEvent_noteId paramValue
             , c'clap_event_param_value'port_index = fromIntegral $ paramValueEvent_portIndex paramValue
@@ -428,7 +431,7 @@ createEvent eventConfig event =
             }
         paramModEventToStruct paramMod = C'clap_event_param_mod
             { c'clap_event_param_mod'header = eventToHeader event (undefined :: C'clap_event_param_mod)
-            , c'clap_event_param_mod'param_id = fromIntegral $ unClapId $ paramModEvent_paramId paramMod
+            , c'clap_event_param_mod'param_id = fromIntegral $ paramModEvent_paramId paramMod
             , c'clap_event_param_mod'cookie = paramModEvent_cookie paramMod
             , c'clap_event_param_mod'note_id = fromIntegral $ paramModEvent_noteId paramMod
             , c'clap_event_param_mod'port_index = fromIntegral $ paramModEvent_portIndex paramMod
@@ -438,7 +441,7 @@ createEvent eventConfig event =
             }
         paramGestureEventToStruct paramGesture = C'clap_event_param_gesture
             { c'clap_event_param_gesture'header = eventToHeader event (undefined :: C'clap_event_param_mod)
-            , c'clap_event_param_gesture'param_id = fromIntegral $ unClapId $ paramGestureEvent_paramId paramGesture
+            , c'clap_event_param_gesture'param_id = fromIntegral $ paramGestureEvent_paramId paramGesture
             }
         transportEventToStruct transport = C'clap_event_transport
             { c'clap_event_transport'header = eventToHeader event (undefined :: C'clap_event_transport)

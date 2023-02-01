@@ -34,13 +34,15 @@ data ThreadType
 
 data PluginHost = PluginHost
     { pluginHost_handle :: HostHandle
-    , pluginHost_plugins :: IORef (Map ClapId Plugin)
+    , pluginHost_plugins :: IORef (Map PluginId Plugin)
     , pluginHost_threadType :: IORef ThreadType
     , pluginHost_extensions :: HostExtensions
     }
 
-newtype ClapId = ClapId (FilePath, Int)
-    deriving (Eq, Ord, Show)
+data PluginId = PluginId 
+    { pluginId_filePath :: FilePath
+    , pluginId_index ::  Int 
+    } deriving (Eq, Ord, Show)
 
 data PluginState
     = Inactive
@@ -96,8 +98,8 @@ createPluginHost hostConfig = do
         , pluginHost_extensions = extensions
         }
 
-load :: PluginHost -> ClapId -> IO ()
-load host (ClapId (filePath, index)) = do
+load :: PluginHost -> PluginId -> IO ()
+load host (PluginId filePath index) = do
     let hostHandle = pluginHost_handle host 
     library <- openPluginLibrary filePath
     entry <- lookupPluginEntry library
@@ -126,7 +128,7 @@ load host (ClapId (filePath, index)) = do
                         process' <- createProcess
                         audioIn <- createAudioBuffer
                         audioOut <- createAudioBuffer
-                        addPlugin (ClapId (filePath, index)) $ Plugin
+                        addPlugin (PluginId filePath index) $ Plugin
                             { plugin_library = library
                             , plugin_entry = entry
                             , plugin_factory = factory
@@ -142,7 +144,7 @@ load host (ClapId (filePath, index)) = do
                             , plugin_audioOut = audioOut
                             }
     where        
-        addPlugin :: ClapId -> Plugin -> IO ()
+        addPlugin :: PluginId -> Plugin -> IO ()
         addPlugin key plugin =
             modifyIORef' (pluginHost_plugins host) $ Map.insert key plugin
 
@@ -182,9 +184,9 @@ processBegin plugin framesCount steadyTime = do
     setFramesCount process' framesCount
     setSteadyTime process' steadyTime
 
-processEvent :: PluginHost -> ClapId -> EventConfig -> Event -> IO ()
-processEvent host clapId eventConfig event = do
-    plugin <- getPlugin host clapId
+processEvent :: PluginHost -> PluginId -> EventConfig -> Event -> IO ()
+processEvent host pluginId eventConfig event = do
+    plugin <- getPlugin host pluginId
     push (plugin_events plugin) eventConfig event
 
 process :: Plugin -> IO PluginOutput
@@ -251,10 +253,10 @@ setPorts plugin inputs outputs = do
     setConstantMask audioOut 0
     setLatency audioOut 0
 
-getPlugin :: PluginHost -> ClapId -> IO Plugin
-getPlugin host clapId = do
+getPlugin :: PluginHost -> PluginId -> IO Plugin
+getPlugin host pluginId = do
     plugins <- readIORef $ pluginHost_plugins host
-    case Map.lookup clapId plugins of
+    case Map.lookup pluginId plugins of
         Nothing -> throw InvalidPluginId
         Just plugin -> pure plugin
 

@@ -3,7 +3,7 @@ module Clap.Interface.Id where
 import Data.Bits
 import Data.Int
 
-newtype ClapId = ClapId { unClapId :: Int }
+newtype ClapId = ClapId { clapId_id :: Int }
     deriving (Show)
 
 beatTimeFactor, secondsTimeFactor :: Int64
