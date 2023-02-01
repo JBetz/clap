@@ -14,22 +14,22 @@ import Foreign.Ptr
 import Foreign.Storable
 
 data ParameterFlag
-    = IsStepped
-    | IsPeriodic
-    | IsHidden
-    | IsReadOnly 
-    | IsBypass
-    | IsAutomatable
-    | IsAutomatablePerNoteId
-    | IsAutomatablePerKey
-    | IsAutomatablePerChannel
-    | IsAutomatablePerPort
-    | IsModulatable
-    | IsModulatablePerNoteId
-    | IsModulatablePerKey
-    | IsModulatablePerChannel
-    | IsModulatablePerPort
-    | RequiresAccess
+    = ParameterFlag_IsStepped
+    | ParameterFlag_IsPeriodic
+    | ParameterFlag_IsHidden
+    | ParameterFlag_IsReadOnly 
+    | ParameterFlag_IsBypass
+    | ParameterFlag_IsAutomatable
+    | ParameterFlag_IsAutomatablePerNoteId
+    | ParameterFlag_IsAutomatablePerKey
+    | ParameterFlag_IsAutomatablePerChannel
+    | ParameterFlag_IsAutomatablePerPort
+    | ParameterFlag_IsModulatable
+    | ParameterFlag_IsModulatablePerNoteId
+    | ParameterFlag_IsModulatablePerKey
+    | ParameterFlag_IsModulatablePerChannel
+    | ParameterFlag_IsModulatablePerPort
+    | ParameterFlag_RequiresAccess
     deriving (Enum, Bounded, Show)
 
 type ParameterInfoHandle = Ptr C'clap_param_info
@@ -115,16 +115,16 @@ flush pluginParameters plugin inputEvents outputEvents = do
     mK'flush funPtr plugin inputEvents outputEvents
 
 data ParameterRescanFlag
-    = RescanValues
-    | RescanText
-    | RescanInfo
-    | RescanAll
+    = ParameterRescanFlag_Values
+    | ParameterRescanFlag_Text
+    | ParameterRescanFlag_Info
+    | ParameterRescanFlag_All
     deriving (Enum, Bounded, Show)
 
 data ParameterClearFlag
-    = ClearAll
-    | ClearAutomations
-    | ClearModulations
+    = ParameterClearFlag_All
+    | ParameterClearFlag_Automations
+    | ParameterClearFlag_Modulations
     deriving (Enum, Bounded, Show)
 
 type HostParametersHandle = Ptr C'clap_host_params

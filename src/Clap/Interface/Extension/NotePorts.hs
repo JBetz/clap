@@ -54,8 +54,8 @@ get pluginNotePorts plugin index isInput = do
         else pure Nothing
 
 data RescanFlag
-    = RescanAll
-    | RescanNames
+    = RescanFlag_All
+    | RescanFlag_Names
     deriving (Enum, Bounded)
 
 type HostNotePortsHandle = Ptr C'clap_host_note_ports

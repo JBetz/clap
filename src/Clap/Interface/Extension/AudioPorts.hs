@@ -16,38 +16,38 @@ import Foreign.Storable
 import Text.Read
 
 data AudioPortFlag
-    = IsMain 
-    | Supports64Bits
-    | Prefers64Bits
-    | RequiresCommonSampleSize
+    = AudioPortFlag_IsMain 
+    | AudioPortFlag_Supports64Bits
+    | AudioPortFlag_Prefers64Bits
+    | AudioPortFlag_RequiresCommonSampleSize
     deriving (Enum, Bounded, Show)
 
 data PortType
-    = Mono
-    | Stereo
-    | Surround  -- ext/surround
-    | Ambisonic -- ext/ambisonic 
-    | CV        -- ext/cv
+    = PortType_Mono
+    | PortType_Stereo
+    | PortType_Surround  -- ext/surround
+    | PortType_Ambisonic -- ext/ambisonic 
+    | PortType_CV        -- ext/cv
     deriving (Enum, Bounded)
 
 instance Show PortType where
     show = \case
-        Mono -> "mono"
-        Stereo -> "stereo"
-        Surround -> "surround"
-        Ambisonic -> "ambisonic"
-        CV -> "cv"
+        PortType_Mono -> "mono"
+        PortType_Stereo -> "stereo"
+        PortType_Surround -> "surround"
+        PortType_Ambisonic -> "ambisonic"
+        PortType_CV -> "cv"
 
 instance Read PortType where
     readPrec = do
         Ident string <- lexP
         case string of
-            "mono" -> pure Mono
-            "stereo" -> pure Stereo
-            "surround" -> pure Surround
-            "ambisonic" -> pure Ambisonic
-            "cv" -> pure CV
-            _ -> pure Stereo
+            "mono" -> pure PortType_Mono
+            "stereo" -> pure PortType_Stereo
+            "surround" -> pure PortType_Surround
+            "ambisonic" -> pure PortType_Ambisonic
+            "cv" -> pure PortType_CV
+            _ -> pure PortType_Stereo
     readListPrec = readListPrecDefault
 
 
@@ -96,12 +96,12 @@ get pluginAudioPorts plugin index isInput = do
 
 
 data RescanFlag
-    = RescanNames
-    | RescanFlags
-    | RescanChannelCount
-    | RescanPortType
-    | RescanInPlacePair
-    | RescanList
+    = RescanFlag_Names
+    | RescanFlag_Flags
+    | RescanFlag_ChannelCount
+    | RescanFlag_PortType
+    | RescanFlag_InPlacePair
+    | RescanFlag_List
     deriving (Enum, Bounded)
 
 type HostAudioPortsHandle = Ptr C'clap_host_audio_ports

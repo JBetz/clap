@@ -23,8 +23,8 @@ coreEventSpaceId = 0
 type EventHandle = Ptr C'clap_event_header
 
 data EventFlag 
-    = IsLive
-    | DoNotRecord
+    = EventFlag_IsLive
+    | EventFlag_DoNotRecord
     deriving (Enum, Bounded, Show)
 
 data ClapEventConfig = ClapEventConfig
@@ -41,36 +41,36 @@ defaultClapEventConfig = ClapEventConfig
     }
 
 data ClapEvent
-    = NoteOn NoteEvent
-    | NoteOff NoteEvent
-    | NoteChoke NoteKillEvent
-    | NoteEnd NoteKillEvent
-    | NoteExpression NoteExpressionEvent
-    | ParamValue ParamValueEvent
-    | ParamMod ParamModEvent
-    | ParamGestureBegin ParamGestureEvent
-    | ParamGestureEnd ParamGestureEvent
-    | Transport TransportEvent
-    | Midi MidiEvent
-    | MidiSysex MidiSysexEvent
-    | Midi2 Midi2Event
+    = ClapEvent_NoteOn NoteEvent
+    | ClapEvent_NoteOff NoteEvent
+    | ClapEvent_NoteChoke NoteKillEvent
+    | ClapEvent_NoteEnd NoteKillEvent
+    | ClapEvent_NoteExpression NoteExpressionEvent
+    | ClapEvent_ParamValue ParamValueEvent
+    | ClapEvent_ParamMod ParamModEvent
+    | ClapEvent_ParamGestureBegin ParamGestureEvent
+    | ClapEvent_ParamGestureEnd ParamGestureEvent
+    | ClapEvent_Transport TransportEvent
+    | ClapEvent_Midi MidiEvent
+    | ClapEvent_MidiSysex MidiSysexEvent
+    | ClapEvent_Midi2 Midi2Event
     deriving (Show)
 
 eventToEnumValue :: ClapEvent -> Int
 eventToEnumValue = \case
-    NoteOn _ -> 0
-    NoteOff _ -> 1
-    NoteChoke _ -> 2
-    NoteEnd _ -> 3
-    NoteExpression _ -> 4
-    ParamValue _ -> 5
-    ParamMod _ -> 6
-    ParamGestureBegin _ -> 7
-    ParamGestureEnd _ -> 8
-    Transport _ -> 9
-    Midi _ -> 10 
-    MidiSysex _ -> 11
-    Midi2 _ -> 12
+    ClapEvent_NoteOn _ -> 0
+    ClapEvent_NoteOff _ -> 1
+    ClapEvent_NoteChoke _ -> 2
+    ClapEvent_NoteEnd _ -> 3
+    ClapEvent_NoteExpression _ -> 4
+    ClapEvent_ParamValue _ -> 5
+    ClapEvent_ParamMod _ -> 6
+    ClapEvent_ParamGestureBegin _ -> 7
+    ClapEvent_ParamGestureEnd _ -> 8
+    ClapEvent_Transport _ -> 9
+    ClapEvent_Midi _ -> 10 
+    ClapEvent_MidiSysex _ -> 11
+    ClapEvent_Midi2 _ -> 12
 
 data NoteEvent = NoteEvent
     { noteEvent_noteId :: Int32
@@ -88,34 +88,34 @@ data NoteKillEvent = NoteKillEvent
     } deriving (Show)
 
 data NoteExpression
-    = Volume Double 
-    | Pan Double
-    | Tuning Double
-    | Vibrato Double
-    | Expression Double
-    | Brightness Double
-    | Pressure Double
+    = NoteExpression_Volume Double 
+    | NoteExpression_Pan Double
+    | NoteExpression_Tuning Double
+    | NoteExpression_Vibrato Double
+    | NoteExpression_Expression Double
+    | NoteExpression_Brightness Double
+    | NoteExpression_Pressure Double
     deriving (Show)
 
 noteExpressionToEnumValue :: NoteExpression -> Int
 noteExpressionToEnumValue = \case
-    Volume _ -> 0
-    Pan _ -> 1
-    Tuning _ -> 2
-    Vibrato _ -> 3
-    Expression _ -> 4
-    Brightness _ -> 5
-    Pressure _ -> 6
+    NoteExpression_Volume _ -> 0
+    NoteExpression_Pan _ -> 1
+    NoteExpression_Tuning _ -> 2
+    NoteExpression_Vibrato _ -> 3
+    NoteExpression_Expression _ -> 4
+    NoteExpression_Brightness _ -> 5
+    NoteExpression_Pressure _ -> 6
 
 noteExpressionToDouble :: NoteExpression -> Double
 noteExpressionToDouble = \case
-    Volume v -> v
-    Pan p -> p
-    Tuning t -> t
-    Vibrato v -> v
-    Expression e -> e
-    Brightness b -> b
-    Pressure p -> p
+    NoteExpression_Volume v -> v
+    NoteExpression_Pan p -> p
+    NoteExpression_Tuning t -> t
+    NoteExpression_Vibrato v -> v
+    NoteExpression_Expression e -> e
+    NoteExpression_Brightness b -> b
+    NoteExpression_Pressure p -> p
 
 data NoteExpressionEvent = NoteExpressionEvent
     { noteExpressionEvent_noteId :: Int32
@@ -153,14 +153,14 @@ data ParamGestureEvent = ParamGestureEvent
     deriving (Show)
 
 data TransportFlag
-    = HasTempo
-    | HasBeatsTimeline
-    | HasSecondsTimeline
-    | HasTimeSignature
-    | IsPlaying
-    | IsRecording
-    | IsLoopActive
-    | IsWithinPreRoll
+    = TransportFlag_HasTempo
+    | TransportFlag_HasBeatsTimeline
+    | TransportFlag_HasSecondsTimeline
+    | TransportFlag_HasTimeSignature
+    | TransportFlag_IsPlaying
+    | TransportFlag_IsRecording
+    | TransportFlag_IsLoopActive
+    | TransportFlag_IsWithinPreRoll
     deriving (Enum, Bounded, Show)
 
 data TransportEvent = TransportEvent
@@ -236,43 +236,43 @@ readEvent cEventHeader = do
     case eventType of
         0 -> do
             cNoteEvent <- peek $ castPtr cEventHeader
-            pure $ Just . NoteOn $ noteEventFromStruct cNoteEvent
+            pure $ Just . ClapEvent_NoteOn $ noteEventFromStruct cNoteEvent
         1 -> do
             cNoteEvent <- peek $ castPtr cEventHeader
-            pure $ Just . NoteOff $ noteEventFromStruct cNoteEvent
+            pure $ Just . ClapEvent_NoteOff $ noteEventFromStruct cNoteEvent
         2 -> do
             cNoteKillEvent <- peek $ castPtr cEventHeader
-            pure $ Just . NoteChoke $ noteKillEventFromStruct cNoteKillEvent
+            pure $ Just . ClapEvent_NoteChoke $ noteKillEventFromStruct cNoteKillEvent
         3 -> do
             cNoteKillEvent <- peek $ castPtr cEventHeader
-            pure $ Just . NoteEnd $ noteKillEventFromStruct cNoteKillEvent
+            pure $ Just . ClapEvent_NoteEnd $ noteKillEventFromStruct cNoteKillEvent
         4 -> do
             cNoteExpressionEvent <- peek $ castPtr cEventHeader
-            pure $ Just . NoteExpression $ noteExpressionEventFromStruct cNoteExpressionEvent
+            pure $ Just . ClapEvent_NoteExpression $ noteExpressionEventFromStruct cNoteExpressionEvent
         5 -> do
             cParamValueEvent <- peek $ castPtr cEventHeader
-            pure $ Just . ParamValue $ paramValueEventFromStruct cParamValueEvent
+            pure $ Just . ClapEvent_ParamValue $ paramValueEventFromStruct cParamValueEvent
         6 -> do
             cParamModEvent <- peek $ castPtr cEventHeader
-            pure $ Just . ParamMod $ paramModEventFromStruct cParamModEvent
+            pure $ Just . ClapEvent_ParamMod $ paramModEventFromStruct cParamModEvent
         7 -> do
             cParamGestureEvent <- peek $ castPtr cEventHeader
-            pure $ Just . ParamGestureBegin $ paramGestureEventFromStruct cParamGestureEvent
+            pure $ Just . ClapEvent_ParamGestureBegin $ paramGestureEventFromStruct cParamGestureEvent
         8 -> do
             cParamGestureEvent <- peek $ castPtr cEventHeader
-            pure $ Just . ParamGestureEnd $ paramGestureEventFromStruct cParamGestureEvent
+            pure $ Just . ClapEvent_ParamGestureEnd $ paramGestureEventFromStruct cParamGestureEvent
         9 -> do
             cTransportEvent <- peek $ castPtr cEventHeader
-            pure $ Just . Transport $ transportEventFromStruct cTransportEvent
+            pure $ Just . ClapEvent_Transport $ transportEventFromStruct cTransportEvent
         10 -> do
             cMidiEvent <- peek $ castPtr cEventHeader
-            pure $ Just . Midi $ midiEventFromStruct cMidiEvent
+            pure $ Just . ClapEvent_Midi $ midiEventFromStruct cMidiEvent
         11 -> do
             cMidiSysexEvent <- peek $ castPtr cEventHeader
-            Just . MidiSysex <$> midiSysexEventFromStruct cMidiSysexEvent
+            Just . ClapEvent_MidiSysex <$> midiSysexEventFromStruct cMidiSysexEvent
         12 -> do
             cMidi2Event <- peek $ castPtr cEventHeader
-            pure $ Just . Midi2 $ midi2EventFromStruct cMidi2Event
+            pure $ Just . ClapEvent_Midi2 $ midi2EventFromStruct cMidi2Event
         _ -> pure Nothing
     where
 
@@ -299,14 +299,14 @@ readEvent cEventHeader = do
             , noteExpressionEvent_value = 
                 let constructor = 
                         case c'clap_event_note_expression'expression_id cNoteExpression of
-                            0 -> Volume 
-                            1 -> Pan
-                            2 -> Tuning
-                            3 -> Vibrato
-                            4 -> Expression
-                            5 -> Brightness
-                            6 -> Pressure
-                            _ -> Volume
+                            0 -> NoteExpression_Volume 
+                            1 -> NoteExpression_Pan
+                            2 -> NoteExpression_Tuning
+                            3 -> NoteExpression_Vibrato
+                            4 -> NoteExpression_Expression
+                            5 -> NoteExpression_Brightness
+                            6 -> NoteExpression_Pressure
+                            _ -> NoteExpression_Volume
                     CDouble value = c'clap_event_note_expression'value cNoteExpression
                 in constructor value
             }
@@ -392,19 +392,19 @@ tryPush outputEvents event = do
 createEvent :: ClapEventConfig -> ClapEvent -> IO (Ptr C'clap_event_header)
 createEvent eventConfig event = 
     case event of
-        NoteOn noteOn -> castPtr <$> new (noteEventToStruct noteOn)
-        NoteOff noteOff -> castPtr <$> new (noteEventToStruct noteOff)
-        NoteChoke noteChoke -> castPtr <$> new (noteKillEventToStruct noteChoke)
-        NoteEnd noteEnd -> castPtr <$> new (noteKillEventToStruct noteEnd)
-        NoteExpression noteExpression -> castPtr <$> new (noteExpressionEventToStruct noteExpression)
-        ParamValue paramValue -> castPtr <$> new (paramValueEventToStruct paramValue)
-        ParamMod paramMod -> castPtr <$> new (paramModEventToStruct paramMod)
-        ParamGestureBegin paramGesture -> castPtr <$> new (paramGestureEventToStruct paramGesture)
-        ParamGestureEnd paramGesture -> castPtr <$> new (paramGestureEventToStruct paramGesture)
-        Transport transport -> castPtr <$> new (transportEventToStruct transport)
-        Midi midi -> castPtr <$> new (midiEventToStruct midi)
-        MidiSysex midiSysex -> castPtr <$> (midiSysexEventToStruct midiSysex >>= new)
-        Midi2 midi2 -> castPtr <$> new (midi2EventToStruct midi2)
+        ClapEvent_NoteOn noteOn -> castPtr <$> new (noteEventToStruct noteOn)
+        ClapEvent_NoteOff noteOff -> castPtr <$> new (noteEventToStruct noteOff)
+        ClapEvent_NoteChoke noteChoke -> castPtr <$> new (noteKillEventToStruct noteChoke)
+        ClapEvent_NoteEnd noteEnd -> castPtr <$> new (noteKillEventToStruct noteEnd)
+        ClapEvent_NoteExpression noteExpression -> castPtr <$> new (noteExpressionEventToStruct noteExpression)
+        ClapEvent_ParamValue paramValue -> castPtr <$> new (paramValueEventToStruct paramValue)
+        ClapEvent_ParamMod paramMod -> castPtr <$> new (paramModEventToStruct paramMod)
+        ClapEvent_ParamGestureBegin paramGesture -> castPtr <$> new (paramGestureEventToStruct paramGesture)
+        ClapEvent_ParamGestureEnd paramGesture -> castPtr <$> new (paramGestureEventToStruct paramGesture)
+        ClapEvent_Transport transport -> castPtr <$> new (transportEventToStruct transport)
+        ClapEvent_Midi midi -> castPtr <$> new (midiEventToStruct midi)
+        ClapEvent_MidiSysex midiSysex -> castPtr <$> (midiSysexEventToStruct midiSysex >>= new)
+        ClapEvent_Midi2 midi2 -> castPtr <$> new (midi2EventToStruct midi2)
     
     where 
         noteEventToStruct note = C'clap_event_note
