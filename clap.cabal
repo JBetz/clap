@@ -107,10 +107,3 @@ library
                       clap/ext/thread-check.h
     c-sources:        cbits/helper.c
     ghc-options:      -Wall
-    
-executable clap-exe
-    main-is:          Main.hs
-    build-depends:    base,
-                      clap
-    hs-source-dirs:   app
-    default-language: Haskell2010
