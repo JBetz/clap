@@ -10,21 +10,6 @@ in
     ];
     buildInputs = [
       pkgs.cmake
-      pkgs.xorg.libX11
-      pkgs.xorg.xcbutil
-      pkgs.xcb-util-cursor
-      pkgs.xorg.xcbutilkeysyms
-      pkgs.libxkbcommon_7
-      pkgs.freetype
-      pkgs.pkg-config
-      pkgs.glib
-      pkgs.cairo
-      pkgs.pango
-      pkgs.pcre
-      pkgs.gtkmm3
-      pkgs.sqlite
-      pkgs.portaudio
-
       pkgs.haskellPackages.c2hsc
       pkgs.ghcid
       pkgs.cabal-install
