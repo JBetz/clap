@@ -184,7 +184,7 @@ processBegin plugin framesCount steadyTime = do
     setFramesCount process' framesCount
     setSteadyTime process' steadyTime
 
-processEvent :: PluginHost -> PluginId -> ClapEventConfig -> ClapEvent -> IO ()
+processEvent :: PluginHost -> PluginId -> EventConfig -> Event -> IO ()
 processEvent host pluginId eventConfig event = do
     plugin <- getPlugin host pluginId
     push (plugin_events plugin) eventConfig event

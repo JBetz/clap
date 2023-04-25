@@ -27,50 +27,50 @@ data EventFlag
     | EventFlag_DoNotRecord
     deriving (Enum, Bounded, Show)
 
-data ClapEventConfig = ClapEventConfig
-    { clapEventConfig_time :: Word32
-    , clapEventConfig_spaceId :: Word16
-    , clapEventConfig_flags :: [EventFlag] 
+data EventConfig = EventConfig
+    { eventConfig_time :: Word32
+    , eventConfig_spaceId :: Word16
+    , eventConfig_flags :: [EventFlag] 
     } deriving (Show)
 
-defaultClapEventConfig :: ClapEventConfig 
-defaultClapEventConfig = ClapEventConfig
-    { clapEventConfig_time = 0
-    , clapEventConfig_spaceId = coreEventSpaceId
-    , clapEventConfig_flags = [] 
+defaultEventConfig :: EventConfig 
+defaultEventConfig = EventConfig
+    { eventConfig_time = 0
+    , eventConfig_spaceId = coreEventSpaceId
+    , eventConfig_flags = [] 
     }
 
-data ClapEvent
-    = ClapEvent_NoteOn NoteEvent
-    | ClapEvent_NoteOff NoteEvent
-    | ClapEvent_NoteChoke NoteKillEvent
-    | ClapEvent_NoteEnd NoteKillEvent
-    | ClapEvent_NoteExpression NoteExpressionEvent
-    | ClapEvent_ParamValue ParamValueEvent
-    | ClapEvent_ParamMod ParamModEvent
-    | ClapEvent_ParamGestureBegin ParamGestureEvent
-    | ClapEvent_ParamGestureEnd ParamGestureEvent
-    | ClapEvent_Transport TransportEvent
-    | ClapEvent_Midi MidiEvent
-    | ClapEvent_MidiSysex MidiSysexEvent
-    | ClapEvent_Midi2 Midi2Event
+data Event
+    = Event_NoteOn NoteEvent
+    | Event_NoteOff NoteEvent
+    | Event_NoteChoke NoteKillEvent
+    | Event_NoteEnd NoteKillEvent
+    | Event_NoteExpression NoteExpressionEvent
+    | Event_ParamValue ParamValueEvent
+    | Event_ParamMod ParamModEvent
+    | Event_ParamGestureBegin ParamGestureEvent
+    | Event_ParamGestureEnd ParamGestureEvent
+    | Event_Transport TransportEvent
+    | Event_Midi MidiEvent
+    | Event_MidiSysex MidiSysexEvent
+    | Event_Midi2 Midi2Event
     deriving (Show)
 
-eventToEnumValue :: ClapEvent -> Int
+eventToEnumValue :: Event -> Int
 eventToEnumValue = \case
-    ClapEvent_NoteOn _ -> 0
-    ClapEvent_NoteOff _ -> 1
-    ClapEvent_NoteChoke _ -> 2
-    ClapEvent_NoteEnd _ -> 3
-    ClapEvent_NoteExpression _ -> 4
-    ClapEvent_ParamValue _ -> 5
-    ClapEvent_ParamMod _ -> 6
-    ClapEvent_ParamGestureBegin _ -> 7
-    ClapEvent_ParamGestureEnd _ -> 8
-    ClapEvent_Transport _ -> 9
-    ClapEvent_Midi _ -> 10 
-    ClapEvent_MidiSysex _ -> 11
-    ClapEvent_Midi2 _ -> 12
+    Event_NoteOn _ -> 0
+    Event_NoteOff _ -> 1
+    Event_NoteChoke _ -> 2
+    Event_NoteEnd _ -> 3
+    Event_NoteExpression _ -> 4
+    Event_ParamValue _ -> 5
+    Event_ParamMod _ -> 6
+    Event_ParamGestureBegin _ -> 7
+    Event_ParamGestureEnd _ -> 8
+    Event_Transport _ -> 9
+    Event_Midi _ -> 10 
+    Event_MidiSysex _ -> 11
+    Event_Midi2 _ -> 12
 
 data NoteEvent = NoteEvent
     { noteEvent_noteId :: Int32
@@ -225,54 +225,54 @@ size events _ = fromIntegral . length <$> readIORef events
 get :: IORef [EventHandle] -> InputEventsHandle -> CUInt -> IO (Ptr C'clap_event_header)
 get events _ index = (!! fromIntegral index) <$> readIORef events
 
-push :: IORef [EventHandle] -> ClapEventConfig -> ClapEvent -> IO ()
+push :: IORef [EventHandle] -> EventConfig -> Event -> IO ()
 push events eventConfig event = do
     newEvent <- createEvent eventConfig event
     modifyIORef' events (<> [newEvent]) 
 
-readEvent :: EventHandle -> IO (Maybe ClapEvent)
+readEvent :: EventHandle -> IO (Maybe Event)
 readEvent cEventHeader = do
     eventType <- peek $ p'clap_event_header'type cEventHeader
     case eventType of
         0 -> do
             cNoteEvent <- peek $ castPtr cEventHeader
-            pure $ Just . ClapEvent_NoteOn $ noteEventFromStruct cNoteEvent
+            pure $ Just . Event_NoteOn $ noteEventFromStruct cNoteEvent
         1 -> do
             cNoteEvent <- peek $ castPtr cEventHeader
-            pure $ Just . ClapEvent_NoteOff $ noteEventFromStruct cNoteEvent
+            pure $ Just . Event_NoteOff $ noteEventFromStruct cNoteEvent
         2 -> do
             cNoteKillEvent <- peek $ castPtr cEventHeader
-            pure $ Just . ClapEvent_NoteChoke $ noteKillEventFromStruct cNoteKillEvent
+            pure $ Just . Event_NoteChoke $ noteKillEventFromStruct cNoteKillEvent
         3 -> do
             cNoteKillEvent <- peek $ castPtr cEventHeader
-            pure $ Just . ClapEvent_NoteEnd $ noteKillEventFromStruct cNoteKillEvent
+            pure $ Just . Event_NoteEnd $ noteKillEventFromStruct cNoteKillEvent
         4 -> do
             cNoteExpressionEvent <- peek $ castPtr cEventHeader
-            pure $ Just . ClapEvent_NoteExpression $ noteExpressionEventFromStruct cNoteExpressionEvent
+            pure $ Just . Event_NoteExpression $ noteExpressionEventFromStruct cNoteExpressionEvent
         5 -> do
             cParamValueEvent <- peek $ castPtr cEventHeader
-            pure $ Just . ClapEvent_ParamValue $ paramValueEventFromStruct cParamValueEvent
+            pure $ Just . Event_ParamValue $ paramValueEventFromStruct cParamValueEvent
         6 -> do
             cParamModEvent <- peek $ castPtr cEventHeader
-            pure $ Just . ClapEvent_ParamMod $ paramModEventFromStruct cParamModEvent
+            pure $ Just . Event_ParamMod $ paramModEventFromStruct cParamModEvent
         7 -> do
             cParamGestureEvent <- peek $ castPtr cEventHeader
-            pure $ Just . ClapEvent_ParamGestureBegin $ paramGestureEventFromStruct cParamGestureEvent
+            pure $ Just . Event_ParamGestureBegin $ paramGestureEventFromStruct cParamGestureEvent
         8 -> do
             cParamGestureEvent <- peek $ castPtr cEventHeader
-            pure $ Just . ClapEvent_ParamGestureEnd $ paramGestureEventFromStruct cParamGestureEvent
+            pure $ Just . Event_ParamGestureEnd $ paramGestureEventFromStruct cParamGestureEvent
         9 -> do
             cTransportEvent <- peek $ castPtr cEventHeader
-            pure $ Just . ClapEvent_Transport $ transportEventFromStruct cTransportEvent
+            pure $ Just . Event_Transport $ transportEventFromStruct cTransportEvent
         10 -> do
             cMidiEvent <- peek $ castPtr cEventHeader
-            pure $ Just . ClapEvent_Midi $ midiEventFromStruct cMidiEvent
+            pure $ Just . Event_Midi $ midiEventFromStruct cMidiEvent
         11 -> do
             cMidiSysexEvent <- peek $ castPtr cEventHeader
-            Just . ClapEvent_MidiSysex <$> midiSysexEventFromStruct cMidiSysexEvent
+            Just . Event_MidiSysex <$> midiSysexEventFromStruct cMidiSysexEvent
         12 -> do
             cMidi2Event <- peek $ castPtr cEventHeader
-            pure $ Just . ClapEvent_Midi2 $ midi2EventFromStruct cMidi2Event
+            pure $ Just . Event_Midi2 $ midi2EventFromStruct cMidi2Event
         _ -> pure Nothing
     where
 
@@ -389,22 +389,22 @@ tryPush outputEvents event = do
     funPtr <- peek $ p'clap_output_events'try_push outputEvents
     mK'try_push funPtr outputEvents event
 
-createEvent :: ClapEventConfig -> ClapEvent -> IO (Ptr C'clap_event_header)
+createEvent :: EventConfig -> Event -> IO (Ptr C'clap_event_header)
 createEvent eventConfig event = 
     case event of
-        ClapEvent_NoteOn noteOn -> castPtr <$> new (noteEventToStruct noteOn)
-        ClapEvent_NoteOff noteOff -> castPtr <$> new (noteEventToStruct noteOff)
-        ClapEvent_NoteChoke noteChoke -> castPtr <$> new (noteKillEventToStruct noteChoke)
-        ClapEvent_NoteEnd noteEnd -> castPtr <$> new (noteKillEventToStruct noteEnd)
-        ClapEvent_NoteExpression noteExpression -> castPtr <$> new (noteExpressionEventToStruct noteExpression)
-        ClapEvent_ParamValue paramValue -> castPtr <$> new (paramValueEventToStruct paramValue)
-        ClapEvent_ParamMod paramMod -> castPtr <$> new (paramModEventToStruct paramMod)
-        ClapEvent_ParamGestureBegin paramGesture -> castPtr <$> new (paramGestureEventToStruct paramGesture)
-        ClapEvent_ParamGestureEnd paramGesture -> castPtr <$> new (paramGestureEventToStruct paramGesture)
-        ClapEvent_Transport transport -> castPtr <$> new (transportEventToStruct transport)
-        ClapEvent_Midi midi -> castPtr <$> new (midiEventToStruct midi)
-        ClapEvent_MidiSysex midiSysex -> castPtr <$> (midiSysexEventToStruct midiSysex >>= new)
-        ClapEvent_Midi2 midi2 -> castPtr <$> new (midi2EventToStruct midi2)
+        Event_NoteOn noteOn -> castPtr <$> new (noteEventToStruct noteOn)
+        Event_NoteOff noteOff -> castPtr <$> new (noteEventToStruct noteOff)
+        Event_NoteChoke noteChoke -> castPtr <$> new (noteKillEventToStruct noteChoke)
+        Event_NoteEnd noteEnd -> castPtr <$> new (noteKillEventToStruct noteEnd)
+        Event_NoteExpression noteExpression -> castPtr <$> new (noteExpressionEventToStruct noteExpression)
+        Event_ParamValue paramValue -> castPtr <$> new (paramValueEventToStruct paramValue)
+        Event_ParamMod paramMod -> castPtr <$> new (paramModEventToStruct paramMod)
+        Event_ParamGestureBegin paramGesture -> castPtr <$> new (paramGestureEventToStruct paramGesture)
+        Event_ParamGestureEnd paramGesture -> castPtr <$> new (paramGestureEventToStruct paramGesture)
+        Event_Transport transport -> castPtr <$> new (transportEventToStruct transport)
+        Event_Midi midi -> castPtr <$> new (midiEventToStruct midi)
+        Event_MidiSysex midiSysex -> castPtr <$> (midiSysexEventToStruct midiSysex >>= new)
+        Event_Midi2 midi2 -> castPtr <$> new (midi2EventToStruct midi2)
     
     where 
         noteEventToStruct note = C'clap_event_note
@@ -497,8 +497,8 @@ createEvent eventConfig event =
 
         eventToHeader event cEvent = C'clap_event_header 
             { c'clap_event_header'size = fromIntegral $ sizeOf cEvent
-            , c'clap_event_header'time = fromIntegral $ clapEventConfig_time eventConfig
-            , c'clap_event_header'space_id = fromIntegral $ clapEventConfig_spaceId eventConfig
+            , c'clap_event_header'time = fromIntegral $ eventConfig_time eventConfig
+            , c'clap_event_header'space_id = fromIntegral $ eventConfig_spaceId eventConfig
             , c'clap_event_header'type = fromIntegral $ eventToEnumValue event
-            , c'clap_event_header'flags = fromIntegral $ flagsToInt $ clapEventConfig_flags eventConfig
+            , c'clap_event_header'flags = fromIntegral $ flagsToInt $ eventConfig_flags eventConfig
             } 
