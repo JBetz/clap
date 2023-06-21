@@ -76,6 +76,7 @@ data PluginException
     | NoDescriptor
     | IncompatibleClapVersion
     | EntryInitializationFailed
+    | PluginFactoryRetrievalFailed
     | PluginInitializationFailed
     | CreationFailed
     | ActivationFailed
@@ -98,7 +99,7 @@ createPluginHost hostConfig = do
         , pluginHost_extensions = extensions
         }
 
-load :: PluginHost -> PluginId -> IO ()
+load :: PluginHost -> PluginId -> IO Plugin
 load host (PluginId filePath index) = do
     let hostHandle = pluginHost_handle host 
     library <- openPluginLibrary filePath
@@ -106,47 +107,50 @@ load host (PluginId filePath index) = do
     isEntryInitialized <- Entry.init entry filePath
     unless isEntryInitialized $ throw EntryInitializationFailed
     maybeFactory <- getFactory entry clapPluginFactoryId
-    whenJust maybeFactory $ \factory -> do
-        count <- getPluginCount factory
-        when (index > count) $ throw InvalidIndex
-        maybeDescriptor <- getPluginDescriptor factory index
-        case maybeDescriptor of
-            Nothing -> throw NoDescriptor
-            Just descriptor -> do
-                unless (clapVersionIsCompatible $ pluginDescriptor_clapVersion descriptor) $ throw IncompatibleClapVersion
-                maybePluginHandle <- createPlugin factory hostHandle (pluginDescriptor_id descriptor) 
-                case maybePluginHandle of
-                    Nothing -> throw CreationFailed
-                    Just pluginHandle -> do 
-                        isPluginInitialized <- Plugin.init pluginHandle
-                        unless isPluginInitialized $ throw PluginInitializationFailed
-                        state <- newIORef Inactive
-                        processStatus <- newIORef Nothing
-                        events <- newIORef []
-                        inputEvents <- createInputEvents events
-                        outputEvents <- createOutputEvents
-                        process' <- createProcess
-                        audioIn <- createAudioBuffer
-                        audioOut <- createAudioBuffer
-                        addPlugin (PluginId filePath index) $ Plugin
-                            { plugin_library = library
-                            , plugin_entry = entry
-                            , plugin_factory = factory
-                            , plugin_descriptor = descriptor
-                            , plugin_handle = pluginHandle
-                            , plugin_state = state
-                            , plugin_processStatus = processStatus
-                            , plugin_events = events
-                            , plugin_inputEvents = inputEvents
-                            , plugin_outputEvents = outputEvents
-                            , plugin_process = process'
-                            , plugin_audioIn = audioIn
-                            , plugin_audioOut = audioOut
-                            }
+    case maybeFactory of
+        Nothing -> throw PluginFactoryRetrievalFailed
+        Just factory -> do
+            count <- getPluginCount factory
+            when (index > count) $ throw InvalidIndex
+            maybeDescriptor <- getPluginDescriptor factory index
+            case maybeDescriptor of
+                Nothing -> throw NoDescriptor
+                Just descriptor -> do
+                    unless (clapVersionIsCompatible $ pluginDescriptor_clapVersion descriptor) $ throw IncompatibleClapVersion
+                    maybePluginHandle <- createPlugin factory hostHandle (pluginDescriptor_id descriptor) 
+                    case maybePluginHandle of
+                        Nothing -> throw CreationFailed
+                        Just pluginHandle -> do 
+                            isPluginInitialized <- Plugin.init pluginHandle
+                            unless isPluginInitialized $ throw PluginInitializationFailed
+                            state <- newIORef Inactive
+                            processStatus <- newIORef Nothing
+                            events <- newIORef []
+                            inputEvents <- createInputEvents events
+                            outputEvents <- createOutputEvents
+                            process' <- createProcess
+                            audioIn <- createAudioBuffer
+                            audioOut <- createAudioBuffer
+                            addPlugin (PluginId filePath index) $ Plugin
+                                { plugin_library = library
+                                , plugin_entry = entry
+                                , plugin_factory = factory
+                                , plugin_descriptor = descriptor
+                                , plugin_handle = pluginHandle
+                                , plugin_state = state
+                                , plugin_processStatus = processStatus
+                                , plugin_events = events
+                                , plugin_inputEvents = inputEvents
+                                , plugin_outputEvents = outputEvents
+                                , plugin_process = process'
+                                , plugin_audioIn = audioIn
+                                , plugin_audioOut = audioOut
+                                }
     where        
-        addPlugin :: PluginId -> Plugin -> IO ()
-        addPlugin key plugin =
+        addPlugin :: PluginId -> Plugin -> IO Plugin
+        addPlugin key plugin = do
             modifyIORef' (pluginHost_plugins host) $ Map.insert key plugin
+            pure plugin
 
 activate :: Plugin -> Double -> Word32 -> IO ()
 activate plugin sampleRate blockSize = do
