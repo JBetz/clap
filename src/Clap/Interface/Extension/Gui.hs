@@ -49,7 +49,7 @@ isApiSupported pluginGui plugin windowApi isFloating = do
 getPreferredApi :: PluginGuiHandle -> PluginHandle -> WindowAPI -> Bool -> IO Bool
 getPreferredApi pluginGui plugin windowApi isFloating = do
     funPtr <- peek $ p'clap_plugin_gui'get_preferred_api pluginGui
-    -- TODO: Why does they require creating a new pointer?
+    -- TODO: Why does this require creating a new pointer?
     cWindowApi <- new $ case windowApi of 
         Win32 -> c'CLAP_WINDOW_API_WIN32
         Cocoa -> c'CLAP_WINDOW_API_COCOA
