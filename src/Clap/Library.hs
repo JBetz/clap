@@ -2,6 +2,7 @@
 
 module Clap.Library 
     ( PluginLibrary
+    , PluginInfo (..)
     , pluginLibraryPaths
     , openPluginLibrary
     , closePluginLibrary
@@ -28,6 +29,11 @@ import System.Directory
 import System.FilePath
 import System.IO.Unsafe (unsafeInterleaveIO)
 
+data PluginInfo = PluginInfo
+    { pluginInfo_filePath :: FilePath
+    , pluginInfo_index :: Int
+    , pluginInfo_descriptor :: PluginDescriptor
+    }
 
 withPluginLibrary :: FilePath -> (PluginLibrary -> IO a) -> IO a
 withPluginLibrary filePath f = do
@@ -36,12 +42,12 @@ withPluginLibrary filePath f = do
     closePluginLibrary pluginLibrary
     pure result
 
-scanForPlugins :: IO [PluginDescriptor]
+scanForPlugins :: IO [PluginInfo]
 scanForPlugins = do
     paths <- pluginLibraryPaths
     scanForPluginsIn paths
 
-scanForPluginsIn :: [FilePath] -> IO [PluginDescriptor]
+scanForPluginsIn :: [FilePath] -> IO [PluginInfo]
 scanForPluginsIn directories = do 
     paths <- traverse (\directory -> do 
         exists <- doesPathExist directory
@@ -56,7 +62,15 @@ scanForPluginsIn directories = do
             entry <- lookupPluginEntry library
             maybeFactory <- getFactory entry clapPluginFactoryId
             case maybeFactory of
-                Just factory -> getPluginDescriptor factory 0
+                Just factory -> do
+                    maybeDescriptor <- getPluginDescriptor factory 0
+                    pure $ case maybeDescriptor of
+                        Just descriptor -> Just $ PluginInfo
+                            { pluginInfo_filePath = filePath
+                            , pluginInfo_index = 0 
+                            , pluginInfo_descriptor = descriptor
+                            }
+                        Nothing -> Nothing
                 Nothing -> pure Nothing
     pure $ catMaybes descriptors
 
