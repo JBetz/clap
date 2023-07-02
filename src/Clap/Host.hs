@@ -223,15 +223,27 @@ data PluginOutput = PluginOutput
     , pluginOutput_rightChannel :: [CFloat] 
     }
 
+instance Semigroup PluginOutput where
+    a <> b = PluginOutput
+        { pluginOutput_leftChannel = pluginOutput_leftChannel a <> pluginOutput_leftChannel b
+        , pluginOutput_rightChannel = pluginOutput_rightChannel a <> pluginOutput_rightChannel b
+        }
+
+instance Monoid PluginOutput where
+    mempty = PluginOutput [] []
+
 getAudioOutput :: Plugin -> IO PluginOutput
 getAudioOutput plugin = do
     let process' = plugin_process plugin    
     frameCount <- getFrameCount process'
-    [leftChannel, rightChannel] <- getBufferData32 (plugin_audioOut plugin) frameCount
-    pure $ PluginOutput
-        { pluginOutput_leftChannel = leftChannel
-        , pluginOutput_rightChannel = rightChannel
-        }
+    channels <- getBufferData32 (plugin_audioOut plugin) frameCount
+    pure $ case channels of
+        [] -> mempty
+        [leftChannel, rightChannel] -> PluginOutput
+            { pluginOutput_leftChannel = leftChannel
+            , pluginOutput_rightChannel = rightChannel
+            }
+        _ -> error $ "Invalid channel count: " <> show (length channels)
 
 processEnd :: Plugin -> Word64 -> Int64 -> IO ()
 processEnd plugin numberOfFrames steadyTime = do
