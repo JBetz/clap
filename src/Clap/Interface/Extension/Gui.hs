@@ -37,7 +37,7 @@ createWindow api handle = do
     cApi <- newCString $ Prelude.show api
     new $ C'clap_window
         { c'clap_window'api = cApi
-       -- , c'clap_window'handle = handle
+        , c'clap_window'handle = handle
         }
     
 isApiSupported :: PluginGuiHandle -> PluginHandle -> WindowAPI -> Bool -> IO Bool
@@ -64,6 +64,18 @@ create pluginGui plugin windowApi isFloating = do
     withCString (Prelude.show windowApi) $ \cWindowApi ->
         pure $ toBool $ mK'create funPtr plugin cWindowApi (fromBool isFloating)
 
+createEmbedded :: PluginGuiHandle -> PluginHandle -> WindowAPI -> IO Bool
+createEmbedded pluginGui plugin windowApi = do
+    funPtr <- peek $ p'clap_plugin_gui'create pluginGui
+    withCString (Prelude.show windowApi) $ \cWindowApi ->
+        pure $ toBool $ mK'create funPtr plugin cWindowApi (fromBool False)
+
+createFloating :: PluginGuiHandle -> PluginHandle -> IO Bool
+createFloating pluginGui plugin = do
+    funPtr <- peek $ p'clap_plugin_gui'create pluginGui
+    withCString "" $ \cWindowApi ->
+        pure $ toBool $ mK'create funPtr plugin cWindowApi (fromBool True)
+
 destroy :: PluginGuiHandle -> PluginHandle -> IO ()
 destroy pluginGui plugin = do
     funPtr <- peek $ p'clap_plugin_gui'destroy pluginGui
@@ -74,12 +86,18 @@ setScale pluginGui plugin scale = do
     funPtr <- peek $ p'clap_plugin_gui'set_scale pluginGui
     pure $ toBool $ mK'set_scale funPtr plugin (CDouble scale)
 
-getSize :: PluginGuiHandle -> PluginHandle -> Int -> Int -> IO Int
-getSize pluginGui plugin width height = do
+getSize :: PluginGuiHandle -> PluginHandle -> IO (Maybe (Int, Int))
+getSize pluginGui plugin = do
     funPtr <- peek $ p'clap_plugin_gui'get_size pluginGui
-    cWidth <- new $ fromIntegral width
-    cHeight <- new $ fromIntegral height
-    pure $ fromIntegral $ mK'get_size funPtr plugin cWidth cHeight
+    cWidth <- new 0
+    cHeight <- new 0
+    let result = mK'get_size funPtr plugin cWidth cHeight
+    if toBool result 
+        then do
+            width <- peek cWidth
+            height <- peek cHeight 
+            pure $ Just (fromIntegral width, fromIntegral height)
+        else pure Nothing
 
 canResize :: PluginGuiHandle -> PluginHandle -> IO Bool
 canResize pluginGui plugin = do
@@ -98,10 +116,10 @@ adjustSize pluginGui plugin width height = do
     cHeight <- new $ fromIntegral height
     pure $ fromIntegral $ mK'adjust_size funPtr plugin cWidth cHeight
 
-setSize :: PluginGuiHandle -> PluginHandle -> Int -> Int -> IO Int
+setSize :: PluginGuiHandle -> PluginHandle -> Int -> Int -> IO Bool
 setSize pluginGui plugin width height = do
     funPtr <- peek $ p'clap_plugin_gui'set_size pluginGui
-    pure $ fromIntegral $ mK'set_size funPtr plugin (fromIntegral width) (fromIntegral height)
+    pure $ toBool $ mK'set_size funPtr plugin (fromIntegral width) (fromIntegral height)
 
 setParent :: PluginGuiHandle -> PluginHandle -> WindowHandle -> IO Bool
 setParent pluginGui plugin window = do
