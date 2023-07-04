@@ -92,8 +92,8 @@ process plugin process' = do
     funPtr <- peek $ p'clap_plugin'process plugin
     pure $ toEnum $ fromIntegral $ mK'process funPtr plugin process'
 
-getExtension :: PluginHandle -> String -> IO (Maybe (Ptr ()))
-getExtension plugin name = do
+getPluginExtension :: PluginHandle -> String -> IO (Maybe (Ptr ()))
+getPluginExtension plugin name = do
     funPtr <- peek $ p'clap_plugin'get_extension plugin
     withCString name $ \cName -> do
         let extension = mK'get_extension funPtr plugin cName

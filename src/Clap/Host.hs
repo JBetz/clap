@@ -89,7 +89,7 @@ instance Exception PluginException
 createPluginHost :: HostConfig -> IO PluginHost
 createPluginHost hostConfig = do
     extensions <- initializeExtensions
-    hostHandle <- Host.createHost $ hostConfig { hostConfig_getExtension = \_ name -> Clap.Extension.getExtension extensions name }
+    hostHandle <- Host.createHost $ hostConfig { hostConfig_getExtension = \_ name -> Clap.Extension.getHostExtension extensions name }
     plugins <- newIORef mempty
     threadType <- newIORef Unknown
     pure $ PluginHost

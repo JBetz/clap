@@ -29,8 +29,8 @@ initializeExtensions = do
         , hostExtensions_log = logHandle
         }
 
-getExtension :: HostExtensions -> String -> IO (Ptr ())
-getExtension extensions name = pure $ if
+getHostExtension :: HostExtensions -> String -> IO (Ptr ())
+getHostExtension extensions name = pure $ if
     | name == Gui.extensionId -> castPtr $ hostExtensions_gui extensions
     | name == Log.extensionId -> castPtr $ hostExtensions_log extensions
     | otherwise -> nullPtr
