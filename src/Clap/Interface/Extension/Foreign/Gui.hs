@@ -54,7 +54,8 @@ type C'clap_xwnd = CULong
 {-# LINE 28 "src/Clap/Interface/Extension/Foreign/Gui.hsc" #-}
 -- #field handle , Ptr ()
 data C'clap_window = C'clap_window{
-  c'clap_window'api :: CString
+  c'clap_window'api :: CString,
+  c'clap_window'handle :: Ptr ()
 } deriving (Eq,Show)
 p'clap_window'api p = plusPtr p 0
 p'clap_window'api :: Ptr (C'clap_window) -> Ptr (CString)
@@ -63,9 +64,11 @@ instance Storable C'clap_window where
   alignment _ = 8
   peek _p = do
     v0 <- peekByteOff _p 0
-    return $ C'clap_window v0
-  poke _p (C'clap_window v0) = do
+    v1 <- peekByteOff _p 8
+    return $ C'clap_window v0 v1
+  poke _p (C'clap_window v0 v1) = do
     pokeByteOff _p 0 v0
+    pokeByteOff _p 8 v1
     return ()
 
 {-# LINE 30 "src/Clap/Interface/Extension/Foreign/Gui.hsc" #-}
@@ -201,7 +204,7 @@ data C'clap_plugin_gui = C'clap_plugin_gui{
   c'clap_plugin_gui'create :: FunPtr (Ptr C'clap_plugin -> CString -> CBool -> CBool),
   c'clap_plugin_gui'destroy :: FunPtr (Ptr C'clap_plugin -> IO ()),
   c'clap_plugin_gui'set_scale :: FunPtr (Ptr C'clap_plugin -> CDouble -> CBool),
-  c'clap_plugin_gui'get_size :: FunPtr (Ptr C'clap_plugin -> Ptr CUInt -> Ptr CUInt -> CInt),
+  c'clap_plugin_gui'get_size :: FunPtr (Ptr C'clap_plugin -> Ptr CUInt -> Ptr CUInt -> CBool),
   c'clap_plugin_gui'can_resize :: FunPtr (Ptr C'clap_plugin -> CBool),
   c'clap_plugin_gui'get_resize_hints :: FunPtr (Ptr C'clap_plugin -> Ptr C'clap_gui_resize_hints -> CBool),
   c'clap_plugin_gui'adjust_size :: FunPtr (Ptr C'clap_plugin -> Ptr CUInt -> Ptr CUInt -> CBool),
@@ -223,7 +226,7 @@ p'clap_plugin_gui'destroy :: Ptr (C'clap_plugin_gui) -> Ptr (FunPtr (Ptr C'clap_
 p'clap_plugin_gui'set_scale p = plusPtr p 32
 p'clap_plugin_gui'set_scale :: Ptr (C'clap_plugin_gui) -> Ptr (FunPtr (Ptr C'clap_plugin -> CDouble -> CBool))
 p'clap_plugin_gui'get_size p = plusPtr p 40
-p'clap_plugin_gui'get_size :: Ptr (C'clap_plugin_gui) -> Ptr (FunPtr (Ptr C'clap_plugin -> Ptr CUInt -> Ptr CUInt -> CInt))
+p'clap_plugin_gui'get_size :: Ptr (C'clap_plugin_gui) -> Ptr (FunPtr (Ptr C'clap_plugin -> Ptr CUInt -> Ptr CUInt -> CBool))
 p'clap_plugin_gui'can_resize p = plusPtr p 48
 p'clap_plugin_gui'can_resize :: Ptr (C'clap_plugin_gui) -> Ptr (FunPtr (Ptr C'clap_plugin -> CBool))
 p'clap_plugin_gui'get_resize_hints p = plusPtr p 56
@@ -379,11 +382,11 @@ foreign import ccall "dynamic" mK'set_scale
   :: C'set_scale -> (Ptr C'clap_plugin -> CDouble -> CBool)
 
 {-# LINE 119 "src/Clap/Interface/Extension/Foreign/Gui.hsc" #-}
-type C'get_size = FunPtr (Ptr C'clap_plugin -> Ptr CUInt -> Ptr CUInt -> CInt)
+type C'get_size = FunPtr (Ptr C'clap_plugin -> Ptr CUInt -> Ptr CUInt -> CBool)
 foreign import ccall "wrapper" mk'get_size
-  :: (Ptr C'clap_plugin -> Ptr CUInt -> Ptr CUInt -> CInt) -> IO C'get_size
+  :: (Ptr C'clap_plugin -> Ptr CUInt -> Ptr CUInt -> CBool) -> IO C'get_size
 foreign import ccall "dynamic" mK'get_size
-  :: C'get_size -> (Ptr C'clap_plugin -> Ptr CUInt -> Ptr CUInt -> CInt)
+  :: C'get_size -> (Ptr C'clap_plugin -> Ptr CUInt -> Ptr CUInt -> CBool)
 
 {-# LINE 120 "src/Clap/Interface/Extension/Foreign/Gui.hsc" #-}
 type C'can_resize = FunPtr (Ptr C'clap_plugin -> CBool)
