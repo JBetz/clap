@@ -211,7 +211,9 @@ process plugin = do
     whenM (isPluginProcessing plugin) $ do
         !status <- Plugin.process (plugin_handle plugin) process'
         setProcessStatus plugin status
-    getAudioOutput plugin
+    output <- getAudioOutput plugin
+    clear (plugin_events plugin)
+    pure output
 
 forEachPlugin :: PluginHost -> (Plugin -> IO a) -> IO [a]
 forEachPlugin host f = do

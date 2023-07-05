@@ -223,12 +223,17 @@ size :: IORef [EventHandle] -> InputEventsHandle -> IO CUInt
 size events _ = fromIntegral . length <$> readIORef events
     
 get :: IORef [EventHandle] -> InputEventsHandle -> CUInt -> IO (Ptr C'clap_event_header)
-get events _ index = (!! fromIntegral index) <$> readIORef events
+get eventsRef _ index = do
+    events <- readIORef eventsRef
+    pure $ events !! fromIntegral index 
 
 push :: IORef [EventHandle] -> EventConfig -> Event -> IO ()
 push events eventConfig event = do
     newEvent <- createEvent eventConfig event
     modifyIORef' events (<> [newEvent]) 
+
+clear :: IORef [EventHandle] -> IO ()
+clear eventsRef = writeIORef eventsRef []
 
 readEvent :: EventHandle -> IO (Maybe Event)
 readEvent cEventHeader = do
