@@ -20,6 +20,7 @@ import Clap.Library.POSIX
 import Clap.Interface.Entry as Entry
 import Clap.Interface.Plugin
 import Clap.Interface.PluginFactory
+import Control.Exception
 import Control.Monad
 import Data.Foldable
 import Data.List
@@ -57,8 +58,8 @@ scanForPluginsIn directories = do
                 pure $ (directory </>) <$> paths
             else pure []
         ) directories
-    descriptors <- for (join paths) $ \filePath -> 
-        withPluginLibrary filePath $ \library -> do 
+    descriptors <- for (join paths) $ \filePath ->
+        (withPluginLibrary filePath $ \library -> do 
             entry <- lookupPluginEntry library
             maybeFactory <- getFactory entry clapPluginFactoryId
             case maybeFactory of
@@ -71,14 +72,18 @@ scanForPluginsIn directories = do
                             , pluginInfo_descriptor = descriptor
                             }
                         Nothing -> Nothing
-                Nothing -> pure Nothing
+                Nothing -> pure Nothing) `catch` (\exception -> do
+                    putStrLn $ "Error when trying to open " <> filePath <> ": " <> displayException (exception :: SomeException) 
+                    pure Nothing)
     pure $ catMaybes descriptors
 
 findFilesWithExtension :: String -> FilePath -> IO [FilePath]
 findFilesWithExtension extension filePath = do
     allEntries <- listDirectory filePath
     let relativeEntries = mkRel <$> allEntries
-    let matches = filter (\name -> ('.':extension) `isSuffixOf` name) relativeEntries
+    matches <- filterM (\name -> do
+        exists <- doesFileExist name
+        pure $ exists && (('.':extension) `isSuffixOf` name)) relativeEntries
     dirs <- filterM doesDirectoryExist relativeEntries
     case dirs of
         [] -> pure matches
