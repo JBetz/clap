@@ -67,6 +67,7 @@ data Plugin = Plugin
     , plugin_process :: ProcessHandle
     , plugin_audioIn :: AudioBufferHandle
     , plugin_audioOut :: AudioBufferHandle
+    , plugin_extensions :: PluginExtensions
     }
 
 data PluginException
@@ -88,7 +89,7 @@ instance Exception PluginException
 
 createPluginHost :: HostConfig -> IO PluginHost
 createPluginHost hostConfig = do
-    extensions <- initializeExtensions
+    extensions <- initializeHostExtensions
     hostHandle <- Host.createHost $ hostConfig { hostConfig_getExtension = \_ name -> Clap.Extension.getHostExtension extensions name }
     plugins <- newIORef mempty
     threadType <- newIORef Unknown
@@ -131,6 +132,7 @@ load host (PluginId filePath index) = do
                             process' <- createProcess
                             audioIn <- createAudioBuffer
                             audioOut <- createAudioBuffer
+                            extensions <- initializePluginExtensions pluginHandle
                             addPlugin (PluginId filePath index) $ Plugin
                                 { plugin_library = library
                                 , plugin_entry = entry
@@ -145,6 +147,7 @@ load host (PluginId filePath index) = do
                                 , plugin_process = process'
                                 , plugin_audioIn = audioIn
                                 , plugin_audioOut = audioOut
+                                , plugin_extensions = extensions
                                 }
     where        
         addPlugin :: PluginId -> Plugin -> IO Plugin

@@ -92,14 +92,14 @@ process plugin process' = do
     funPtr <- peek $ p'clap_plugin'process plugin
     pure $ toEnum $ fromIntegral $ mK'process funPtr plugin process'
 
-getPluginExtension :: PluginHandle -> String -> IO (Maybe (Ptr ()))
+getPluginExtension :: PluginHandle -> String -> IO (Maybe (Ptr a))
 getPluginExtension plugin name = do
     funPtr <- peek $ p'clap_plugin'get_extension plugin
     withCString name $ \cName -> do
         let extension = mK'get_extension funPtr plugin cName
         pure $ if extension == nullPtr
             then Nothing
-            else Just extension
+            else Just (castPtr extension)
 
 onMainThread :: PluginHandle -> IO ()
 onMainThread plugin = do
