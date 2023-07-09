@@ -3,6 +3,7 @@ module Clap.Library.Windows where
 import Clap.Interface.Entry
 import Foreign.Ptr
 import System.Environment
+import System.FilePath (takeDirectory)
 import System.Win32.DLL as DLL
 import System.Win32.Types
 
@@ -17,6 +18,7 @@ newtype PluginLibrary = PluginLibrary { unPluginLibrary :: HMODULE }
 
 openPluginLibrary :: FilePath -> IO PluginLibrary
 openPluginLibrary filePath = do
+    DLL.setDllDirectory $ Just (takeDirectory filePath)
     library <- DLL.loadLibrary filePath
     pure $ PluginLibrary library
 
