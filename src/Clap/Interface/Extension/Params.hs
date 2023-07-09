@@ -13,6 +13,9 @@ import Foreign.Marshal.Utils
 import Foreign.Ptr
 import Foreign.Storable
 
+extensionId :: String
+extensionId = "clap.params"
+
 data ParameterFlag
     = ParameterFlag_IsStepped
     | ParameterFlag_IsPeriodic

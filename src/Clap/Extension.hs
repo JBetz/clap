@@ -45,7 +45,7 @@ data PluginExtensions = PluginExtensions
 initializePluginExtensions :: PluginHandle -> IO PluginExtensions
 initializePluginExtensions pluginHandle = do
     maybeGuiHandle <- getPluginExtension pluginHandle Gui.extensionId
-    maybeParamsHandle <- getPluginExtension pluginHandle Gui.extensionId
+    maybeParamsHandle <- getPluginExtension pluginHandle Params.extensionId
     pure $ PluginExtensions 
         { pluginExtensions_gui = maybeGuiHandle
         , pluginExtensions_params = maybeParamsHandle 
