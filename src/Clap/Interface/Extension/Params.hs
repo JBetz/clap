@@ -58,7 +58,7 @@ count pluginParameters plugin = do
 getInfo :: PluginParametersHandle -> PluginHandle -> Word32 -> IO (Maybe ParameterInfo)
 getInfo pluginParameters plugin index = do
     funPtr <- peek $ p'clap_plugin_params'get_info pluginParameters
-    cParamInfoPtr <- new $ C'clap_param_info 
+    cParamInfoPtr <- new $ C'clap_param_info
         { c'clap_param_info'id = 0
         , c'clap_param_info'flags = 0
         , c'clap_param_info'cookie = nullPtr
@@ -69,21 +69,21 @@ getInfo pluginParameters plugin index = do
         , c'clap_param_info'default_value = 0
         }
     let result = toBool $ mK'get_info funPtr plugin (fromIntegral index) cParamInfoPtr
-    cParamInfo <- peek cParamInfoPtr
     if result
         then do
+            cParamInfo <- peek cParamInfoPtr
             pure $ Just $ ParameterInfo
                 { parameterInfo_id = ClapId $ fromIntegral $ c'clap_param_info'id cParamInfo
                 , parameterInfo_flags = intToFlags $ fromIntegral $ c'clap_param_info'flags cParamInfo
                 , parameterInfo_cookie = c'clap_param_info'cookie cParamInfo
-                , parameterInfo_name = fromCChars $ c'clap_param_info'name cParamInfo
-                , parameterInfo_module = fromCChars $ c'clap_param_info'module cParamInfo
+                , parameterInfo_name = takeWhile (\c -> c /= '\NUL') $ fromCChars (c'clap_param_info'name cParamInfo)
+                , parameterInfo_module = takeWhile (\c -> c /= '\NUL') $ fromCChars (c'clap_param_info'module cParamInfo)
                 , parameterInfo_minimumValue = fromCDouble $ c'clap_param_info'min_value cParamInfo
                 , parameterInfo_maximumValue = fromCDouble $ c'clap_param_info'max_value cParamInfo
                 , parameterInfo_defaultValue = fromCDouble $ c'clap_param_info'default_value cParamInfo
                 } 
         else pure Nothing
-
+        
 getValue :: PluginParametersHandle -> PluginHandle -> ClapId -> IO (Maybe Double)
 getValue pluginParameters plugin (ClapId parameterId) = do
     funPtr <- peek $ p'clap_plugin_params'get_value pluginParameters
