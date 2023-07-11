@@ -37,11 +37,15 @@ data PluginHost = PluginHost
     , pluginHost_plugins :: IORef (Map PluginId Plugin)
     , pluginHost_threadType :: IORef ThreadType
     , pluginHost_extensions :: HostExtensions
+    , pluginHost_pluginCounter :: IORef Int
     }
 
-data PluginId = PluginId 
-    { pluginId_filePath :: FilePath
-    , pluginId_index ::  Int 
+newtype PluginId = PluginId { pluginId_id :: Int }
+    deriving (Eq, Ord, Show)
+
+data PluginLocation = PluginLocation 
+    { pluginLocation_filePath :: FilePath
+    , pluginLocation_index ::  Int 
     } deriving (Eq, Ord, Show)
 
 data PluginState
@@ -54,7 +58,8 @@ data PluginState
     deriving (Eq, Show)
 
 data Plugin = Plugin
-    { plugin_library :: PluginLibrary
+    { plugin_location :: PluginLocation
+    , plugin_library :: PluginLibrary
     , plugin_entry :: PluginEntryHandle
     , plugin_factory :: PluginFactoryHandle
     , plugin_descriptor :: PluginDescriptor
@@ -93,15 +98,17 @@ createPluginHost hostConfig = do
     hostHandle <- Host.createHost $ hostConfig { hostConfig_getExtension = \_ name -> Clap.Extension.getHostExtension extensions name }
     plugins <- newIORef mempty
     threadType <- newIORef Unknown
+    pluginCounter <- newIORef 1
     pure $ PluginHost
         { pluginHost_handle = hostHandle 
         , pluginHost_plugins = plugins
         , pluginHost_threadType = threadType
         , pluginHost_extensions = extensions
+        , pluginHost_pluginCounter = pluginCounter
         }
 
-load :: PluginHost -> PluginId -> IO Plugin
-load host (PluginId filePath index) = do
+load :: PluginHost -> PluginLocation -> IO (PluginId, Plugin)
+load host location@(PluginLocation filePath index) = do
     let hostHandle = pluginHost_handle host 
     library <- openPluginLibrary filePath
     entry <- lookupPluginEntry library
@@ -133,8 +140,9 @@ load host (PluginId filePath index) = do
                             audioIn <- createAudioBuffer
                             audioOut <- createAudioBuffer
                             extensions <- initializePluginExtensions pluginHandle
-                            addPlugin (PluginId filePath index) $ Plugin
-                                { plugin_library = library
+                            addPlugin $ Plugin
+                                { plugin_location = location
+                                , plugin_library = library
                                 , plugin_entry = entry
                                 , plugin_factory = factory
                                 , plugin_descriptor = descriptor
@@ -150,10 +158,11 @@ load host (PluginId filePath index) = do
                                 , plugin_extensions = extensions
                                 }
     where        
-        addPlugin :: PluginId -> Plugin -> IO Plugin
-        addPlugin key plugin = do
-            modifyIORef' (pluginHost_plugins host) $ Map.insert key plugin
-            pure plugin
+        addPlugin :: Plugin -> IO (PluginId, Plugin)
+        addPlugin plugin = do
+            pluginId <- createPluginId host
+            modifyIORef' (pluginHost_plugins host) $ Map.insert pluginId plugin
+            pure (pluginId, plugin)
 
 activate :: Plugin -> Double -> Word32 -> IO ()
 activate plugin sampleRate blockSize = do
@@ -300,3 +309,7 @@ isPluginProcessing plugin = (== ActiveAndProcessing) <$> readIORef (plugin_state
 
 isPluginSleeping :: Plugin -> IO Bool
 isPluginSleeping plugin = (== ActiveAndSleeping) <$> readIORef (plugin_state plugin)
+
+createPluginId :: PluginHost -> IO PluginId
+createPluginId pluginHost = atomicModifyIORef' (pluginHost_pluginCounter pluginHost) $ \pluginCounter ->
+    (pluginCounter + 1, PluginId pluginCounter)

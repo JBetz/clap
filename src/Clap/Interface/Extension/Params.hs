@@ -38,7 +38,8 @@ data ParameterFlag
 type ParameterInfoHandle = Ptr C'clap_param_info
 
 data ParameterInfo = ParameterInfo
-    { parameterInfo_id :: ClapId 
+    { parameterInfo_index :: Int
+    , parameterInfo_id :: ClapId 
     , parameterInfo_flags :: [ParameterFlag]
     , parameterInfo_cookie :: Ptr ()
     , parameterInfo_name :: String
@@ -73,7 +74,8 @@ getInfo pluginParameters plugin index = do
         then do
             cParamInfo <- peek cParamInfoPtr
             pure $ Just $ ParameterInfo
-                { parameterInfo_id = ClapId $ fromIntegral $ c'clap_param_info'id cParamInfo
+                { parameterInfo_index = fromIntegral index
+                , parameterInfo_id = ClapId $ fromIntegral $ c'clap_param_info'id cParamInfo
                 , parameterInfo_flags = intToFlags $ fromIntegral $ c'clap_param_info'flags cParamInfo
                 , parameterInfo_cookie = c'clap_param_info'cookie cParamInfo
                 , parameterInfo_name = takeWhile (\c -> c /= '\NUL') $ fromCChars (c'clap_param_info'name cParamInfo)
@@ -83,7 +85,7 @@ getInfo pluginParameters plugin index = do
                 , parameterInfo_defaultValue = fromCDouble $ c'clap_param_info'default_value cParamInfo
                 } 
         else pure Nothing
-        
+
 getValue :: PluginParametersHandle -> PluginHandle -> ClapId -> IO (Maybe Double)
 getValue pluginParameters plugin (ClapId parameterId) = do
     funPtr <- peek $ p'clap_plugin_params'get_value pluginParameters
