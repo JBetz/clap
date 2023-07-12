@@ -17,12 +17,17 @@ data HostExtensions = HostExtensions
 
 initializeHostExtensions :: IO HostExtensions
 initializeHostExtensions = do
+    resizeHintsChangedC <- mk'resize_hints_changed $ \_host -> print "resize_hints_changed"
+    requestResizeC <- mk'request_resize $ \_host _width _height -> print "request resize" >> pure (fromBool False)
+    requestShowC <- mk'request_show $ \_host -> print "request_show" >> pure (fromBool False)
+    requestHideC <- mk'request_hide $ \_host -> print "request_hide" >> pure (fromBool False)
+    closedC <- mk'closed $ \_host _wasDestroyed -> print "closed" >> pure ()
     guiHandle <- new $ C'clap_host_gui 
-        { c'clap_host_gui'resize_hints_changed = nullFunPtr
-        , c'clap_host_gui'request_resize = nullFunPtr
-        , c'clap_host_gui'request_show = nullFunPtr
-        , c'clap_host_gui'request_hide = nullFunPtr
-        , c'clap_host_gui'closed = nullFunPtr
+        { c'clap_host_gui'resize_hints_changed = resizeHintsChangedC
+        , c'clap_host_gui'request_resize = requestResizeC
+        , c'clap_host_gui'request_show = requestShowC
+        , c'clap_host_gui'request_hide = requestHideC
+        , c'clap_host_gui'closed = closedC
         }
     logHandle <- createHostLog $ \_hostHandle logLevel message ->
         putStrLn $ Prelude.show logLevel <> ": " <> message 

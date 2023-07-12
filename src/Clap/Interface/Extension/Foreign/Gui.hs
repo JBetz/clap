@@ -310,21 +310,31 @@ type C'clap_plugin_gui_t = C'clap_plugin_gui
 {-# LINE 112 "src/Clap/Interface/Extension/Foreign/Gui.hsc" #-}
 data C'clap_host_gui = C'clap_host_gui{
   c'clap_host_gui'resize_hints_changed :: FunPtr (Ptr C'clap_host -> IO ()),
-  c'clap_host_gui'request_resize :: FunPtr (Ptr C'clap_host -> CUInt -> CUInt -> CInt),
-  c'clap_host_gui'request_show :: FunPtr (Ptr C'clap_host -> CInt),
-  c'clap_host_gui'request_hide :: FunPtr (Ptr C'clap_host -> CInt),
-  c'clap_host_gui'closed :: FunPtr (Ptr C'clap_host -> CInt -> IO ())
+  c'clap_host_gui'request_resize :: FunPtr (Ptr C'clap_host -> CUInt -> CUInt -> IO CBool),
+  c'clap_host_gui'request_show :: FunPtr (Ptr C'clap_host -> IO CBool),
+  c'clap_host_gui'request_hide :: FunPtr (Ptr C'clap_host -> IO CBool),
+  c'clap_host_gui'closed :: FunPtr (Ptr C'clap_host -> CBool -> IO ())
 } deriving (Eq,Show)
 p'clap_host_gui'resize_hints_changed p = plusPtr p 0
 p'clap_host_gui'resize_hints_changed :: Ptr (C'clap_host_gui) -> Ptr (FunPtr (Ptr C'clap_host -> IO ()))
+type C'resize_hints_changed = FunPtr (Ptr C'clap_host -> IO ())
+foreign import ccall "wrapper" mk'resize_hints_changed :: (Ptr C'clap_host -> IO ()) -> IO C'resize_hints_changed
 p'clap_host_gui'request_resize p = plusPtr p 8
-p'clap_host_gui'request_resize :: Ptr (C'clap_host_gui) -> Ptr (FunPtr (Ptr C'clap_host -> CUInt -> CUInt -> CInt))
+p'clap_host_gui'request_resize :: Ptr (C'clap_host_gui) -> Ptr (FunPtr (Ptr C'clap_host -> CUInt -> CUInt -> IO CBool))
+type C'request_resize = FunPtr (Ptr C'clap_host -> CUInt -> CUInt -> IO CBool)
+foreign import ccall "wrapper" mk'request_resize :: (Ptr C'clap_host -> CUInt -> CUInt -> IO CBool) -> IO C'request_resize
 p'clap_host_gui'request_show p = plusPtr p 16
-p'clap_host_gui'request_show :: Ptr (C'clap_host_gui) -> Ptr (FunPtr (Ptr C'clap_host -> CInt))
+p'clap_host_gui'request_show :: Ptr (C'clap_host_gui) -> Ptr (FunPtr (Ptr C'clap_host -> IO CBool))
+type C'request_show = FunPtr (Ptr C'clap_host -> IO CBool)
+foreign import ccall "wrapper" mk'request_show :: (Ptr C'clap_host -> IO CBool) -> IO C'request_show
 p'clap_host_gui'request_hide p = plusPtr p 24
-p'clap_host_gui'request_hide :: Ptr (C'clap_host_gui) -> Ptr (FunPtr (Ptr C'clap_host -> CInt))
+p'clap_host_gui'request_hide :: Ptr (C'clap_host_gui) -> Ptr (FunPtr (Ptr C'clap_host -> IO CBool))
+type C'request_hide = FunPtr (Ptr C'clap_host -> IO CBool)
+foreign import ccall "wrapper" mk'request_hide :: (Ptr C'clap_host -> IO CBool) -> IO C'request_hide
 p'clap_host_gui'closed p = plusPtr p 32
-p'clap_host_gui'closed :: Ptr (C'clap_host_gui) -> Ptr (FunPtr (Ptr C'clap_host -> CInt -> IO ()))
+p'clap_host_gui'closed :: Ptr (C'clap_host_gui) -> Ptr (FunPtr (Ptr C'clap_host -> CBool -> IO ()))
+type C'closed = FunPtr (Ptr C'clap_host -> CBool -> IO ())
+foreign import ccall "wrapper" mk'closed :: (Ptr C'clap_host -> CBool -> IO ()) -> IO C'closed
 instance Storable C'clap_host_gui where
   sizeOf _ = 40
   alignment _ = 8
