@@ -109,17 +109,30 @@ getResizeHints pluginGui plugin guiResizeHints = do
     funPtr <- peek $ p'clap_plugin_gui'get_resize_hints pluginGui
     pure $ toBool $ mK'get_resize_hints funPtr plugin guiResizeHints
 
-adjustSize :: PluginGuiHandle -> PluginHandle -> Int -> Int -> IO Int
+adjustSize :: PluginGuiHandle -> PluginHandle -> Int -> Int -> IO (Maybe (Int, Int))
 adjustSize pluginGui plugin width height = do
     funPtr <- peek $ p'clap_plugin_gui'adjust_size pluginGui
     cWidth <- new $ fromIntegral width
     cHeight <- new $ fromIntegral height
-    pure $ fromIntegral $ mK'adjust_size funPtr plugin cWidth cHeight
+    let result = toBool $ mK'adjust_size funPtr plugin cWidth cHeight
+    if result 
+        then do
+            actualWidth <- peek cWidth
+            actualHeight <- peek cHeight
+            pure $ Just (fromIntegral actualWidth, fromIntegral actualHeight)
+        else pure Nothing
 
 setSize :: PluginGuiHandle -> PluginHandle -> Int -> Int -> IO Bool
 setSize pluginGui plugin width height = do
     funPtr <- peek $ p'clap_plugin_gui'set_size pluginGui
     pure $ toBool $ mK'set_size funPtr plugin (fromIntegral width) (fromIntegral height)
+
+setClosestUsableSize :: PluginGuiHandle -> PluginHandle -> Int -> Int -> IO Bool
+setClosestUsableSize pluginGui plugin width height = do
+    result <- adjustSize pluginGui plugin width height
+    case result of
+        Just (actualWidth, actualHeight) -> setSize pluginGui plugin actualWidth actualHeight
+        Nothing -> pure False
 
 setParent :: PluginGuiHandle -> PluginHandle -> WindowHandle -> IO Bool
 setParent pluginGui plugin window = do
