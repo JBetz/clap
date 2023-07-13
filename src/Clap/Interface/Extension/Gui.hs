@@ -127,12 +127,16 @@ setSize pluginGui plugin width height = do
     funPtr <- peek $ p'clap_plugin_gui'set_size pluginGui
     pure $ toBool $ mK'set_size funPtr plugin (fromIntegral width) (fromIntegral height)
 
-setClosestUsableSize :: PluginGuiHandle -> PluginHandle -> Int -> Int -> IO Bool
+setClosestUsableSize :: PluginGuiHandle -> PluginHandle -> Int -> Int -> IO (Maybe (Int, Int))
 setClosestUsableSize pluginGui plugin width height = do
-    result <- adjustSize pluginGui plugin width height
-    case result of
-        Just (actualWidth, actualHeight) -> setSize pluginGui plugin actualWidth actualHeight
-        Nothing -> pure False
+    adjustSizeResult <- adjustSize pluginGui plugin width height
+    case adjustSizeResult of
+        Just (actualWidth, actualHeight) -> do
+            setSizeResult <- setSize pluginGui plugin actualWidth actualHeight
+            if setSizeResult 
+                then pure adjustSizeResult
+                else pure Nothing
+        Nothing -> pure Nothing
 
 setParent :: PluginGuiHandle -> PluginHandle -> WindowHandle -> IO Bool
 setParent pluginGui plugin window = do
