@@ -72,12 +72,7 @@ typedef unsigned long clap_xwnd;
 // Represent a window reference.
 typedef struct clap_window {
    const char *api; // one of CLAP_WINDOW_API_XXX
-   union {
-      clap_nsview cocoa;
-      clap_xwnd   x11;
-      clap_hwnd   win32;
-      void       *ptr; // for anything defined outside of clap
-   };
+   void       *handle; // for anything defined outside of clap
 } clap_window_t;
 
 // Information to improve window resizing when initiated by the host or window manager.
