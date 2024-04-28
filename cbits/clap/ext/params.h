@@ -12,7 +12,7 @@
 /// The plugin is responsible for keeping its audio processor and its GUI in sync.
 ///
 /// The host can at any time read parameters' value on the [main-thread] using
-/// @ref clap_plugin_params.value().
+/// @ref clap_plugin_params.get_value().
 ///
 /// There are two options to communicate parameter value changes, and they are not concurrent.
 /// - send automation points during clap_plugin.process()
@@ -21,7 +21,7 @@
 ///
 /// When the plugin changes a parameter value, it must inform the host.
 /// It will send @ref CLAP_EVENT_PARAM_VALUE event during process() or flush().
-/// If the user is adjusting the value, don't forget to mark the begining and end
+/// If the user is adjusting the value, don't forget to mark the beginning and end
 /// of the gesture by sending CLAP_EVENT_PARAM_GESTURE_BEGIN and CLAP_EVENT_PARAM_GESTURE_END
 /// events.
 ///
@@ -46,7 +46,7 @@
 ///   (latency, audio ports, new parameters, ...) be sure to wait for the host
 ///   to deactivate the plugin to apply those changes.
 ///   If there are no breaking changes, the plugin can apply them them right away.
-///   The plugin is resonsible for updating both its audio processor and its gui.
+///   The plugin is responsible for updating both its audio processor and its gui.
 ///
 /// II. Turning a knob on the DAW interface
 /// - the host will send an automation event to the plugin via a process() or flush()
@@ -55,16 +55,17 @@
 /// - the plugin is responsible for sending the parameter value to its audio processor
 /// - call clap_host_params->request_flush() or clap_host->request_process().
 /// - when the host calls either clap_plugin->process() or clap_plugin_params->flush(),
-///   send an automation event and don't forget to set begin_adjust,
-///   end_adjust and should_record flags
+///   send an automation event and don't forget to wrap the parameter change(s)
+///   with CLAP_EVENT_PARAM_GESTURE_BEGIN and CLAP_EVENT_PARAM_GESTURE_END to define the
+///   beginning and end of the gesture.
 ///
 /// IV. Turning a knob via automation
 /// - host sends an automation point during clap_plugin->process() or clap_plugin_params->flush().
 /// - the plugin is responsible for updating its GUI
 ///
 /// V. Turning a knob via plugin's internal MIDI mapping
-/// - the plugin sends a CLAP_EVENT_PARAM_SET output event, set should_record to false
-/// - the plugin is responsible to update its GUI
+/// - the plugin sends a CLAP_EVENT_PARAM_VALUE output event, set should_record to false
+/// - the plugin is responsible for updating its GUI
 ///
 /// VI. Adding or removing parameters
 /// - if the plugin is activated call clap_host->restart()
@@ -74,7 +75,7 @@
 ///     call clap_host_params.clear(host, param_id, CLAP_PARAM_CLEAR_ALL)
 ///   - call clap_host_params->rescan(CLAP_PARAM_RESCAN_ALL)
 ///
-/// CLAP allows the plugin to change the parameter range, yet the plugin developper
+/// CLAP allows the plugin to change the parameter range, yet the plugin developer
 /// should be aware that doing so isn't without risk, especially if you made the
 /// promise to never change the sound. If you want to be 100% certain that the
 /// sound will not change with all host, then simply never change the range.
@@ -89,7 +90,7 @@
 /// should be stored as plain value in the document.
 ///
 /// If the host goes with the first approach, there will still be situation where the
-/// sound may innevitably change. For example, if the plugin increase the range, there
+/// sound may inevitably change. For example, if the plugin increase the range, there
 /// is an automation playing at the max value and on top of that an LFO is applied.
 /// See the following curve:
 ///                                   .
@@ -97,15 +98,29 @@
 ///          .....                  .   .
 /// before: .     .     and after: .     .
 ///
+/// Persisting parameter values:
+///
+/// Plugins are responsible for persisting their parameter's values between
+/// sessions by implementing the state extension. Otherwise parameter value will
+/// not be recalled when reloading a project. Hosts should _not_ try to save and
+/// restore parameter values for plugins that don't implement the state
+/// extension.
+///
 /// Advice for the host:
+///
 /// - store plain values in the document (automation)
 /// - store modulation amount in plain value delta, not in percentage
 /// - when you apply a CC mapping, remember the min/max plain values so you can adjust
+/// - do not implement a parameter saving fall back for plugins that don't
+///   implement the state extension
 ///
 /// Advice for the plugin:
+///
 /// - think carefully about your parameter range when designing your DSP
 /// - avoid shrinking parameter ranges, they are very likely to change the sound
 /// - consider changing the parameter range as a tradeoff: what you improve vs what you break
+/// - make sure to implement saving and loading the parameter values using the
+///   state extension
 /// - if you plan to use adapters for other plugin formats, then you need to pay extra
 ///   attention to the adapter requirements
 
@@ -120,7 +135,7 @@ enum {
    // if so the double value is converted to integer using a cast (equivalent to trunc).
    CLAP_PARAM_IS_STEPPED = 1 << 0,
 
-   // Useful for for periodic parameters like a phase
+   // Useful for periodic parameters like a phase
    CLAP_PARAM_IS_PERIODIC = 1 << 1,
 
    // The parameter should not be shown to the user, because it is currently not used.
@@ -180,6 +195,11 @@ enum {
    // A simple example would be a DC Offset, changing it will change the output signal and must be
    // processed.
    CLAP_PARAM_REQUIRES_PROCESS = 1 << 15,
+
+   // This parameter represents an enumerated value.
+   // If you set this flag, then you must set CLAP_PARAM_IS_STEPPED too.
+   // All values from min to max must not have a blank value_to_text().
+   CLAP_PARAM_IS_ENUM = 1 << 16,
 };
 typedef uint32_t clap_param_info_flags;
 
@@ -191,7 +211,7 @@ typedef struct clap_param_info {
    clap_param_info_flags flags;
 
    // This value is optional and set by the plugin.
-   // Its purpose is to provide a fast access to the plugin parameter object by caching its pointer.
+   // Its purpose is to provide fast access to the plugin parameter object by caching its pointer.
    // For instance:
    //
    // in clap_plugin_params.get_info():
@@ -236,19 +256,23 @@ typedef struct clap_plugin_params {
    // [main-thread]
    uint32_t(CLAP_ABI *count)(const clap_plugin_t *plugin);
 
-   // Copies the parameter's info to param_info. Returns true on success.
+   // Copies the parameter's info to param_info.
+   // Returns true on success.
    // [main-thread]
    bool(CLAP_ABI *get_info)(const clap_plugin_t *plugin,
                             uint32_t             param_index,
                             clap_param_info_t   *param_info);
 
-   // Writes the parameter's current value to out_value. Returns true on success.
+   // Writes the parameter's current value to out_value.
+   // Returns true on success.
    // [main-thread]
    bool(CLAP_ABI *get_value)(const clap_plugin_t *plugin, clap_id param_id, double *out_value);
 
    // Fills out_buffer with a null-terminated UTF-8 string that represents the parameter at the
-   // given 'value' argument. eg: "2.3 kHz". Returns true on success. The host should always use
-   // this to format parameter values before displaying it to the user. [main-thread]
+   // given 'value' argument. eg: "2.3 kHz". The host should always use this to format parameter
+   // values before displaying it to the user.
+   // Returns true on success.
+   // [main-thread]
    bool(CLAP_ABI *value_to_text)(const clap_plugin_t *plugin,
                                  clap_id              param_id,
                                  double               value,
@@ -256,7 +280,8 @@ typedef struct clap_plugin_params {
                                  uint32_t             out_buffer_capacity);
 
    // Converts the null-terminated UTF-8 param_value_text into a double and writes it to out_value.
-   // Returns true on success. The host can use this to convert user input into a parameter value.
+   // The host can use this to convert user input into a parameter value.
+   // Returns true on success.
    // [main-thread]
    bool(CLAP_ABI *text_to_value)(const clap_plugin_t *plugin,
                                  clap_id              param_id,

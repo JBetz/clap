@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../plugin.h"
-#include "../../string-sizes.h"
+#include "../plugin.h"
+#include "../string-sizes.h"
 
 // This extension let the plugin provide a structured way of mapping parameters to an hardware
 // controller.
@@ -31,7 +31,11 @@
 // Pressing that button once gets you to the first page of the section.
 // Press it again to cycle through the section's pages.
 
-static CLAP_CONSTEXPR const char CLAP_EXT_REMOTE_CONTROLS[] = "clap.remote-controls.draft/1";
+static CLAP_CONSTEXPR const char CLAP_EXT_REMOTE_CONTROLS[] = "clap.remote-controls/2";
+
+// The latest draft is 100% compatible
+// This compat ID may be removed in 2026.
+static CLAP_CONSTEXPR const char CLAP_EXT_REMOTE_CONTROLS_COMPAT[] = "clap.remote-controls.draft/2";
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,6 +48,10 @@ typedef struct clap_remote_controls_page {
    clap_id page_id;
    char    page_name[CLAP_NAME_SIZE];
    clap_id param_ids[CLAP_REMOTE_CONTROLS_COUNT];
+
+   // This is used to separate device pages versus preset pages.
+   // If true, then this page is specific to this preset.
+   bool is_for_preset;
 } clap_remote_controls_page_t;
 
 typedef struct clap_plugin_remote_controls {
@@ -52,6 +60,7 @@ typedef struct clap_plugin_remote_controls {
    uint32_t(CLAP_ABI *count)(const clap_plugin_t *plugin);
 
    // Get a page by index.
+   // Returns true on success and stores the result into page.
    // [main-thread]
    bool(CLAP_ABI *get)(const clap_plugin_t         *plugin,
                        uint32_t                     page_index,
@@ -63,7 +72,7 @@ typedef struct clap_host_remote_controls {
    // [main-thread]
    void(CLAP_ABI *changed)(const clap_host_t *host);
 
-   // Suggest a page to the host because it correspond to what the user is currently editing in the
+   // Suggest a page to the host because it corresponds to what the user is currently editing in the
    // plugin's GUI.
    // [main-thread]
    void(CLAP_ABI *suggest_page)(const clap_host_t *host, clap_id page_id);

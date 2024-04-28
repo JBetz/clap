@@ -9,7 +9,9 @@ data PluginFeature
     = Instrument
     | AudioEffect
     | NoteEffect
+    | NoteDetector
     | Analyzer 
+
     -- Sub-category   
     | Synthesizer
     | Sampler
@@ -71,6 +73,7 @@ instance Read PluginFeature where
                 "instrument" -> Instrument
                 "audio-effect" -> AudioEffect
                 "note-effect" -> NoteEffect
+                "note-detector" -> NoteDetector
                 "analyzer" -> Analyzer
                 "synthesizer" -> Synthesizer
                 "sampler" -> Sampler

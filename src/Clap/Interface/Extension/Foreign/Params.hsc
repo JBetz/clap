@@ -26,6 +26,7 @@ import Clap.Interface.Foreign.Plugin
     CLAP_PARAM_IS_MODULATABLE_PER_CHANNEL = 1 << 13,
     CLAP_PARAM_IS_MODULATABLE_PER_PORT = 1 << 14,
     CLAP_PARAM_REQUIRES_PROCESS = 1 << 15
+    CLAP_PARAM_IS_ENUM = 1 << 16;
 }; -}
 #num CLAP_PARAM_IS_STEPPED
 #num CLAP_PARAM_IS_PERIODIC
@@ -43,6 +44,7 @@ import Clap.Interface.Foreign.Plugin
 #num CLAP_PARAM_IS_MODULATABLE_PER_CHANNEL
 #num CLAP_PARAM_IS_MODULATABLE_PER_PORT
 #num CLAP_PARAM_REQUIRES_PROCESS
+#num CLAP_PARAM_IS_ENUM
 {- typedef uint32_t clap_param_info_flags; -}
 #synonym_t clap_param_info_flags , CUInt
 {- typedef struct clap_param_info {
