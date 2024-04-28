@@ -25,7 +25,7 @@ import Clap.Interface.Foreign.Plugin (C'clap_plugin)
         } clap_window_t; -}
 #starttype struct clap_window
 #field api , CString
--- #field handle , Ptr ()
+#field handle , Ptr ()
 #stoptype
 #synonym_t clap_window_t , <struct clap_window>
 {- typedef struct clap_gui_resize_hints {
@@ -105,12 +105,17 @@ import Clap.Interface.Foreign.Plugin (C'clap_plugin)
         } clap_host_gui_t; -}
 #starttype struct clap_host_gui
 #field resize_hints_changed , FunPtr (Ptr <struct clap_host> -> IO ())
-#field request_resize , FunPtr (Ptr <struct clap_host> -> CUInt -> CUInt -> CInt)
-#field request_show , FunPtr (Ptr <struct clap_host> -> CInt)
-#field request_hide , FunPtr (Ptr <struct clap_host> -> CInt)
+#field request_resize , FunPtr (Ptr <struct clap_host> -> CUInt -> CUInt -> CBool)
+#field request_show , FunPtr (Ptr <struct clap_host> -> CBool)
+#field request_hide , FunPtr (Ptr <struct clap_host> -> CBool)
 #field closed , FunPtr (Ptr <struct clap_host> -> CInt -> IO ())
 #stoptype
 #synonym_t clap_host_gui_t , <struct clap_host_gui>
+#callback_t resize_hints_changed , Ptr <struct clap_host> -> IO ()
+#callback_t request_resize , Ptr <struct clap_host> -> CUInt -> CUInt -> CBool
+#callback_t request_show , Ptr <struct clap_host> -> CBool
+#callback_t request_hide , Ptr <struct clap_host> -> CBool
+#callback_t closed , Ptr <struct clap_host> -> CInt -> IO ()
 #callback_t is_api_supported , Ptr <struct clap_plugin> -> CString -> CBool -> CBool
 #callback_t get_preferred_api , Ptr <struct clap_plugin> -> Ptr CString -> Ptr CBool -> CBool
 #callback_t create , Ptr <struct clap_plugin> -> CString -> CBool -> CBool
